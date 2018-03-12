@@ -50,7 +50,10 @@
                  | name_revoke_tx
                  | contract_create_tx
                  | contract_call_tx
-                 | channel_create_tx.
+                 | channel_create_tx
+                 | channel_deposit_tx
+                 | channel_withdraw_tx
+                 | channel_close_mutual_tx.
 
 -type tx_instance() :: aec_spend_tx:tx()
                      | aec_coinbase_tx:tx()
@@ -65,7 +68,10 @@
                      | aens_revoke_tx:tx()
                      | aect_create_tx:tx()
                      | aect_call_tx:tx()
-                     | aesc_create_tx:tx().
+                     | aesc_create_tx:tx()
+                     | aesc_deposit_tx:tx()
+                     | aesc_withdraw_tx:tx()
+                     | aesc_close_mutual_tx:tx().
 
 %% @doc Where does this transaction come from? Is it a top level transaction or was it created by
 %%      smart contract. In the latter case the fee logic is different.
