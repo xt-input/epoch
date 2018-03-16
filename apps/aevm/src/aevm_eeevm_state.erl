@@ -39,6 +39,8 @@
         , no_recursion/1
 	, number/1
 	, return_data/1
+        , chain_state/1
+        , chain_api/1
 	, set_code/2
 	, set_cp/2
 	, set_gas/2
@@ -49,6 +51,7 @@
 	, set_selfdestruct/2
 	, set_stack/2
 	, set_storage/2
+        , set_chain_state/2
 	, stack/1
 	, storage/1
 	, timestamp/1
@@ -94,6 +97,9 @@ init(#{ env  := Env
 	 , do_trace  => maps:get(trace, Opts, false)
 	 , trace => []
 	 , trace_fun => init_trace_fun(Opts)
+
+         , chain_state => maps:get(chainState, Env)
+         , chain_api   => maps:get(chainAPI, Env)
 
 	 , environment =>
 	       #{ spec => Spec
@@ -230,6 +236,9 @@ do_trace(State)    -> maps:get(do_trace, State).
 trace(State)       -> maps:get(trace, State).
 trace_fun(State)   -> maps:get(trace_fun, State).
 
+chain_state(State) -> maps:get(chain_state, State).
+chain_api(State)   -> maps:get(chain_api, State).
+
 set_cp(Value, State)      -> maps:put(cp, Value, State).
 set_code(Value, State)    -> maps:put(code, Value, State).
 set_stack(Value, State)   -> maps:put(stack, Value, State).
@@ -240,6 +249,7 @@ set_logs(Value, State)    -> maps:put(logs, Value, State).
 set_storage(Value, State) -> maps:put(storage, Value, State).
 set_jumpdests(Value, State)    -> maps:put(jumpdests, Value, State).
 set_selfdestruct(Value, State) -> maps:put(selfdestruct, Value, State).
+set_chain_state(Value, State) -> maps:put(chain_state, Value, State).
 
 add_callcreates(#{ data := _
                  , destination := _
