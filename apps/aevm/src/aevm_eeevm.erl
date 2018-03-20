@@ -1126,8 +1126,8 @@ loop(StateIn) ->
 		16#fb -> eval_error({illegal_instruction, OP}, State0);
 		16#fc -> eval_error({illegal_instruction, OP}, State0);
 		16#fd -> eval_error({illegal_instruction, OP}, State0);
-		?INVALID -> 
-		    %% 0xfe INVALID δ=∅ α=∅ 
+		?INVALID ->
+		    %% 0xfe INVALID δ=∅ α=∅
 		    %% Designated invalid instruction.
 		    eval_error({the_invalid_instruction, OP}, State0);
 		?SUICIDE ->
@@ -1418,10 +1418,10 @@ recursive_call(State, Op) ->
     CallDepth = aevm_eeevm_state:calldepth(State),
     case CallDepth < 1024 of
         false -> {0, State}; %% TODO: Should this consume gas?
-        true  -> recursive_call(CallDepth, State, Op)
+        true  -> recursive_call1(State, Op)
     end.
 
-recursive_call(CallDepth, StateIn, Op) ->
+recursive_call1(StateIn, Op) ->
     %% Message-call into an account.
     %% i ≡ µm[µs[3] . . .(µs[3] + µs[4] − 1)]
     State0            = spend_call_gas(StateIn, Op),
@@ -1469,8 +1469,7 @@ recursive_call(CallDepth, StateIn, Op) ->
                  ?DELEGATECALL -> aevm_eeevm_state:caller(State8)
              end,
     CallState = aevm_eeevm_state:prepare_for_call(Caller, Dest, CallGas, Value,
-                                                  Code, CallDepth,
-                                                  State8),
+                                                  Code, State8),
     case aevm_eeevm_state:no_recursion(State8) of
         true  -> %% Just set up a call for testing without actually calling.
             GasOut = GasAfterSpend + CallGas,
