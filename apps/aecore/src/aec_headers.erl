@@ -16,7 +16,7 @@
          serialize_pow_evidence/1,
          deserialize_pow_evidence/1,
          root_hash/1,
-         validate/1]).
+         validate/2]).
 
 -include("common.hrl").
 -include("blocks.hrl").

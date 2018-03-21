@@ -27,7 +27,7 @@
          serialize_client_readable/2,
          hash_internal_representation/1,
          root_hash/1,
-         validate/1,
+         validate/2,
          cointains_coinbase_tx/1]).
 
 -ifdef(TEST).

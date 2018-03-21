@@ -237,6 +237,7 @@ internal_insert(Node, Original, State0) ->
     %% spurious error messages.
     State = State0#{ currently_adding => hash(Node)},
     assert_not_new_genesis(Node, State),
+    %% TODO: xxx this holds only for microblocks
     assert_previous_height(Node),
     StateOut = internal_insert_1(Node, Original, State),
     maps:remove(currently_adding, StateOut).
@@ -269,6 +270,7 @@ check_update_after_insert(Node, State) ->
         {fork, ForkNode} -> update_state_tree(ForkNode, State)
     end.
 
+%% TODO: ng - consider having pointer to prev key-block in a key-block
 determine_chain_relation(Node, State) ->
     Height   = node_height(Node),
     Hash     = Node#node.hash,
