@@ -17,6 +17,8 @@
          set_pow/3,
          signature/1,
          set_signature/2,
+         key/1,
+         set_key/2,
          set_target/2,
          new/3,
          new_with_state/3,
