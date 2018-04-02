@@ -56,7 +56,8 @@
                  | channel_close_mutual_tx
                  | channel_close_solo_tx
                  | channel_slash_tx
-                 | channel_settle_tx.
+                 | channel_settle_tx
+                 | channel_offchain_tx.
 
 -type tx_instance() :: aec_spend_tx:tx()
                      | aec_coinbase_tx:tx()
@@ -77,7 +78,8 @@
                      | aesc_close_mutual_tx:tx()
                      | aesc_close_solo_tx:tx()
                      | aesc_slash_tx:tx()
-                     | aesc_settle_tx:tx().
+                     | aesc_settle_tx:tx()
+                     | aesc_offchain_tx:tx().
 
 %% @doc Where does this transaction come from? Is it a top level transaction or was it created by
 %%      smart contract. In the latter case the fee logic is different.
@@ -238,7 +240,8 @@ type_to_cb(channel_withdraw_tx)     -> aesc_withdraw_tx;
 type_to_cb(channel_close_solo_tx)   -> aesc_close_solo_tx;
 type_to_cb(channel_close_mutual_tx) -> aesc_close_mutual_tx;
 type_to_cb(channel_slash_tx)        -> aesc_slash_tx;
-type_to_cb(channel_settle_tx)       -> aesc_settle_tx.
+type_to_cb(channel_settle_tx)       -> aesc_settle_tx;
+type_to_cb(channel_offchain_tx)     -> aesc_offchain_tx.
 
 -spec is_coinbase(Tx :: tx()) -> boolean().
 is_coinbase(#aetx{ type = Type }) ->
@@ -270,6 +273,7 @@ tx_types() ->
     , channel_close_solo_tx
     , channel_slash_tx
     , channel_settle_tx
+    , channel_offchain_tx
     ].
 
 -spec is_tx_type(MaybeTxType :: binary() | atom()) -> boolean().
