@@ -794,7 +794,7 @@ handle_key_block_candidate_reply({Result,_OldTopHash}, State) ->
                                aec_blocks:difficulty(KeyBlockCandidate)]),
             Candidate = new_candidate(KeyBlockCandidate, Nonce,
                                       RandomNonce, State),
-            State1 = #state{block_candidate = Candidate},
+            State1 = State#state{block_candidate = Candidate},
             start_mining(State1);
         {error, key_not_found} ->
             start_mining(State#state{keys_ready = false});
