@@ -16,8 +16,8 @@
          fee/1,
          nonce/1,
          origin/1,
-         check/3,
-         process/3,
+         check/5,
+         process/5,
          accounts/1,
          signers/1,
          serialization_template/1,
@@ -71,12 +71,13 @@ nonce(#channel_close_solo_tx{nonce = Nonce}) ->
 origin(#channel_close_solo_tx{account = AccountPubKey}) ->
     AccountPubKey.
 
--spec check(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()} | {error, term()}.
+-spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
 check(#channel_close_solo_tx{channel_id = ChannelId,
                              account    = AccountPubKey,
                              payload    = Payload,
                              fee        = Fee,
-                             nonce      = Nonce}, Trees, Height) ->
+                             nonce        = Nonce}, _Context, Trees, Height,
+                                                _ConsensusVersion) ->
     Checks =
         [fun() -> aetx_utils:check_account(AccountPubKey, Trees, Height, Nonce, Fee) end,
          fun() -> check_payload(ChannelId, AccountPubKey, Payload, Trees) end],
@@ -87,12 +88,13 @@ check(#channel_close_solo_tx{channel_id = ChannelId,
             Error
     end.
 
--spec process(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()}.
+-spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
 process(#channel_close_solo_tx{channel_id = ChannelId,
                                account    = AccountPubKey,
                                payload    = Payload,
                                fee        = Fee,
-                               nonce      = Nonce}, Trees, Height) ->
+                               nonce        = Nonce}, _Context, Trees, Height,
+                                                  _ConsensusVersion) ->
     AccountsTree0 = aec_trees:accounts(Trees),
     ChannelsTree0 = aec_trees:channels(Trees),
 

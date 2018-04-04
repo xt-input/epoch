@@ -12,8 +12,8 @@
          fee/1,
          nonce/1,
          origin/1,
-         check/3,
-         process/3,
+         check/5,
+         process/5,
          accounts/1,
          signers/1,
          serialization_template/1,
@@ -72,17 +72,20 @@ nonce(#channel_offchain_tx{sequence_number = N}) ->
 origin(#channel_offchain_tx{initiator = Origin}) ->
     Origin.
 
+-spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
 check(#channel_offchain_tx{
          channel_id         = _ChannelId,
          initiator          = _InitiatorPubKey,
          participant        = _ParticipantPubKey,
          initiator_amount   = _InitiatorAmount,
          participant_amount = _ParticipantAmount,
-         sequence_number    = _SequenceNumber}, Trees, _Height) ->
+         sequence_number    = _SequenceNumber}, _Context, Trees, Height,
+                                                _ConsensusVersion) ->
     %% TODO: implement checks relevant to off-chain
     {ok, Trees}.
 
-process(#channel_offchain_tx{}, _Trees, _Height) ->
+-spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
+process(#channel_offchain_tx{}, _Context, _Trees, _Height, _ConsensusVersion) ->
     error(off_chain_tx).
 
 -spec accounts(tx()) -> list(pubkey()).

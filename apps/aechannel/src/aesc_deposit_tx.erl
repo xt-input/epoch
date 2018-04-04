@@ -16,8 +16,8 @@
          fee/1,
          nonce/1,
          origin/1,
-         check/3,
-         process/3,
+         check/5,
+         process/5,
          accounts/1,
          signers/1,
          serialization_template/1,
@@ -77,7 +77,7 @@ nonce(#channel_deposit_tx{nonce = Nonce}) ->
 origin(#channel_deposit_tx{from_account = FromPubKey}) ->
     FromPubKey.
 
--spec check(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()} | {error, term()}.
+-spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
 check(#channel_deposit_tx{channel_id   = ChannelId,
                           from_account = FromPubKey,
                           to_account   = ToPubKey,
@@ -85,7 +85,8 @@ check(#channel_deposit_tx{channel_id   = ChannelId,
                           initiator    = InitiatorPubKey,
                           participant  = ParticipantPubKey,
                           fee          = Fee,
-                          nonce        = Nonce}, Trees, Height) ->
+                          nonce        = Nonce}, _Context, Trees, Height,
+                                                _ConsensusVersion) ->
     Checks =
         [fun() -> aetx_utils:check_account(FromPubKey, Trees, Height, Nonce, Amount + Fee) end,
          fun() -> aesc_utils:check_active_channel_exists(ChannelId, InitiatorPubKey, ParticipantPubKey, Trees) end,
@@ -97,13 +98,14 @@ check(#channel_deposit_tx{channel_id   = ChannelId,
             Error
     end.
 
--spec process(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()}.
+-spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
 process(#channel_deposit_tx{channel_id   = ChannelId,
                             from_account = FromPubKey,
                             to_account   = ToPubKey,
                             amount       = Amount,
                             fee          = Fee,
-                            nonce        = Nonce}, Trees, Height) ->
+                            nonce        = Nonce}, _Context, Trees, Height,
+                                                  _ConsensusVersion) ->
     AccountsTree0 = aec_trees:accounts(Trees),
     ChannelsTree0 = aec_trees:channels(Trees),
 
@@ -148,9 +150,9 @@ serialize(#channel_deposit_tx{channel_id   = ChannelId,
     [ {channel_id  , ChannelId}
     , {from_account, FromPubKey}
     , {to_account  , ToPubKey}
-    , {amount      , Amount}
     , {initiator   , InitiatorPubKey}
     , {participant , ParticipantPubKey}
+    , {amount      , Amount}
     , {fee         , Fee}
     , {nonce       , Nonce}
     ]}.

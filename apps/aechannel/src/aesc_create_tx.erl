@@ -16,8 +16,8 @@
          fee/1,
          nonce/1,
          origin/1,
-         check/3,
-         process/3,
+         check/5,
+         process/5,
          accounts/1,
          signers/1,
          serialization_template/1,
@@ -87,7 +87,7 @@ nonce(#channel_create_tx{nonce = Nonce}) ->
 origin(#channel_create_tx{initiator = InitiatorPubKey}) ->
     InitiatorPubKey.
 
--spec check(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()} | {error, term()}.
+-spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
 check(#channel_create_tx{initiator          = InitiatorPubKey,
                          push_amount        = PushAmount,
                          initiator_amount   = InitiatorAmount,
@@ -95,7 +95,8 @@ check(#channel_create_tx{initiator          = InitiatorPubKey,
                          participant_amount = ParticipantAmount,
                          channel_reserve    = ChannelReserve,
                          nonce              = Nonce,
-                         fee                = Fee}, Trees, Height) ->
+                         fee                = Fee}, _Context, Trees, Height,
+                                                    _ConsensusVersion) ->
     Checks =
         [fun() -> aetx_utils:check_account(InitiatorPubKey, Trees, Height, Nonce, InitiatorAmount + Fee) end,
          fun() -> aetx_utils:check_account(ParticipantPubKey, Trees, Height, ParticipantAmount) end,
@@ -111,13 +112,14 @@ check(#channel_create_tx{initiator          = InitiatorPubKey,
             Error
     end.
 
--spec process(tx(), aec_trees:trees(), height()) -> {ok, aec_trees:trees()}.
+-spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
 process(#channel_create_tx{initiator          = InitiatorPubKey,
                            initiator_amount   = InitiatorAmount,
                            participant        = ParticipantPubKey,
                            participant_amount = ParticipantAmount,
                            fee                = Fee,
-                           nonce              = Nonce} = CreateTx, Trees0, Height) ->
+                           nonce              = Nonce} = CreateTx, _Context, Trees0, Height,
+                                                  _ConsensusVersion) ->
     AccountsTree0 = aec_trees:accounts(Trees0),
     ChannelsTree0 = aec_trees:channels(Trees0),
 
@@ -159,10 +161,10 @@ serialize(#channel_create_tx{initiator          = InitiatorPubKey,
                              nonce              = Nonce}) ->
     {version(),
     [ {initiator         , InitiatorPubKey}
-    , {push_amount       , PushAmount}
     , {initiator_amount  , InitiatorAmount}
     , {participant       , ParticipantPubKey}
     , {participant_amount, ParticipantAmount}
+    , {push_amount       , PushAmount}
     , {channel_reserve   , ChannelReserve}
     , {lock_period       , LockPeriod}
     , {fee               , Fee}
@@ -172,10 +174,10 @@ serialize(#channel_create_tx{initiator          = InitiatorPubKey,
 -spec deserialize(vsn(), list()) -> tx().
 deserialize(?CHANNEL_CREATE_TX_VSN,
             [ {initiator         , InitiatorPubKey}
-            , {push_amount       , PushAmount}
             , {initiator_amount  , InitiatorAmount}
             , {participant       , ParticipantPubKey}
             , {participant_amount, ParticipantAmount}
+            , {push_amount       , PushAmount}
             , {channel_reserve   , ChannelReserve}
             , {lock_period       , LockPeriod}
             , {fee               , Fee}
