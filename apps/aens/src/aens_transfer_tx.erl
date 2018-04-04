@@ -144,10 +144,10 @@ deserialize(?NAME_TRANSFER_TX_VSN,
 
 serialization_template(?NAME_TRANSFER_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {hash, binary}
     , {recipient, binary}
-    , {fee, int}
+    , {fee, uint}
     ].
 
 -spec for_client(tx()) -> map().

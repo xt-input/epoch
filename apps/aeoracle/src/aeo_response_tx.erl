@@ -162,10 +162,10 @@ deserialize(?ORACLE_RESPONSE_TX_VSN,
 
 serialization_template(?ORACLE_RESPONSE_TX_VSN) ->
     [ {oracle, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {query_id, binary}
     , {response, binary}
-    , {fee, int}
+    , {fee, uint}
     ].
 
 -spec version() -> non_neg_integer().

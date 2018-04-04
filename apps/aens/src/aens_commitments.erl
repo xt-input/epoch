@@ -84,8 +84,8 @@ deserialize(Bin) ->
 serialization_template(?COMMITMENT_VSN) ->
     [ {hash, binary}
     , {owner, binary}
-    , {created, int}
-    , {expires, int}
+    , {created, uint}
+    , {expires, uint}
     ].
 
 %%%===================================================================

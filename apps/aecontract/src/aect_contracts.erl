@@ -162,16 +162,16 @@ deserialize(Bin) ->
 
 serialization_template(?CONTRACT_VSN) ->
     [ {pubkey, binary}
-    , {balance, int}
-    , {height, int}
+    , {balance, uint}
+    , {height, uint}
     , {owner, binary}
-    , {vm_version, int}
+    , {vm_version, uint}
     , {code, binary}
     , {state, binary}
     , {log, binary}
     , {active, bool}
     , {referers, [binary]}
-    , {deposit, int}
+    , {deposit, uint}
     ].
 
 -spec compute_contract_pubkey(pubkey(), non_neg_integer()) -> pubkey().

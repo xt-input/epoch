@@ -158,14 +158,14 @@ deserialize(B) ->
 
 serialization_template(?ORACLE_QUERY_VSN) ->
     [ {sender_address , binary}
-    , {sender_nonce   , int}
+    , {sender_nonce   , uint}
     , {oracle_address , binary}
     , {query          , binary}
     , {has_response   , bool}
     , {response       , binary}
-    , {expires        , int}
-    , {response_ttl   , int}
-    , {fee            , int}
+    , {expires        , uint}
+    , {response_ttl   , uint}
+    , {fee            , uint}
     ].
 
 %%%===================================================================

@@ -127,8 +127,8 @@ serialization_template(?ORACLE_VSN) ->
     [ {owner, binary}
     , {query_format, binary}
     , {response_format, binary}
-    , {query_fee, int}
-    , {expires, int}
+    , {query_fee, uint}
+    , {expires, uint}
     ].
 
 

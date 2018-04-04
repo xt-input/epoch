@@ -146,9 +146,9 @@ deserialize(?SPEND_TX_VSN,
 serialization_template(?SPEND_TX_VSN) ->
     [ {sender, binary}
     , {recipient, binary}
-    , {amount, int}
-    , {fee, int}
-    , {nonce, int}
+    , {amount, uint}
+    , {fee, uint}
+    , {nonce, uint}
     ].
 
 for_client(#spend_tx{sender = Sender,

@@ -122,10 +122,10 @@ deserialize(B) ->
 
 serialization_template(?CONTRACT_INTERACTION_VSN) ->
     [ {caller_address, binary}
-    , {caller_nonce, int}
-    , {height, int}
+    , {caller_nonce, uint}
+    , {height, uint}
     , {contract_address, binary}
-    , {gas_used, int}
+    , {gas_used, uint}
     , {return_value, binary}
     ].
 

@@ -138,9 +138,9 @@ deserialize(?NAME_PRECLAIM_TX_VSN,
 
 serialization_template(?NAME_PRECLAIM_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {commitment, binary}
-    , {fee, int}
+    , {fee, uint}
     ].
 
 -spec for_client(tx()) -> map().

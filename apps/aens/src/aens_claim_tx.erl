@@ -160,10 +160,10 @@ deserialize(?NAME_CLAIM_TX_VSN,
 
 serialization_template(?NAME_CLAIM_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {name, binary}
-    , {name_salt, int}
-    , {fee, int}
+    , {name_salt, uint}
+    , {fee, uint}
     ].
 
 

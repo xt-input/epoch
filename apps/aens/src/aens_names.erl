@@ -113,9 +113,9 @@ deserialize(Bin) ->
 serialization_template(?NAME_VSN) ->
     [ {hash, binary}
     , {owner, binary}
-    , {expires, int}
+    , {expires, uint}
     , {status, binary}
-    , {ttl, int}
+    , {ttl, uint}
     , {pointers, binary} %% TODO: This needs to be stricter
     ].
 

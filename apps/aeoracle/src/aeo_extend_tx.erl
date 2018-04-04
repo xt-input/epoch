@@ -141,10 +141,10 @@ deserialize(?ORACLE_EXTEND_TX_VSN,
 
 serialization_template(?ORACLE_EXTEND_TX_VSN) ->
     [ {oracle, binary}
-    , {nonce, int}
-    , {ttl_type, int}
-    , {ttl_value, int}
-    , {fee, int}
+    , {nonce, uint}
+    , {ttl_type, uint}
+    , {ttl_value, uint}
+    , {fee, uint}
     ].
 
 -spec version() -> non_neg_integer().

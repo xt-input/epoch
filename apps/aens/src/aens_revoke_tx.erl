@@ -134,9 +134,9 @@ deserialize(?NAME_REVOKE_TX_VSN,
 
 serialization_template(?NAME_REVOKE_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {hash, binary}
-    , {fee, int}
+    , {fee, uint}
     ].
 
 -spec for_client(tx()) -> map().

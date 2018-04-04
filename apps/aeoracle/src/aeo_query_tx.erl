@@ -199,15 +199,15 @@ deserialize(?ORACLE_QUERY_TX_VSN,
 
 serialization_template(?ORACLE_QUERY_TX_VSN) ->
     [ {sender, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {oracle, binary}
     , {query, binary}
-    , {query_fee, int}
-    , {query_ttl_type, int}
-    , {query_ttl_value, int}
-    , {response_ttl_type, int}
-    , {response_ttl_value, int}
-    , {fee, int}
+    , {query_fee, uint}
+    , {query_ttl_type, uint}
+    , {query_ttl_value, uint}
+    , {response_ttl_type, uint}
+    , {response_ttl_value, uint}
+    , {fee, uint}
     ].
 
 -spec version() -> non_neg_integer().

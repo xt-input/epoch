@@ -158,12 +158,12 @@ deserialize(?NAME_UPDATE_TX_VSN,
 
 serialization_template(?NAME_UPDATE_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {hash, binary}
-    , {name_ttl, int}
+    , {name_ttl, uint}
     , {pointers, binary} %% TODO: This might be ambigous
-    , {ttl, int}
-    , {fee, int}
+    , {ttl, uint}
+    , {fee, uint}
     ].
 
 

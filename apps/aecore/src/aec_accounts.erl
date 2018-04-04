@@ -100,7 +100,7 @@ deserialize(SerializedAccount) ->
 
 serialization_template(?ACCOUNT_VSN) ->
     [ {pubkey, binary}
-    , {nonce, int}
-    , {height, int}
-    , {balance, int}
+    , {nonce, uint}
+    , {height, uint}
+    , {balance, uint}
     ].

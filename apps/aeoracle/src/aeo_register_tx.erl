@@ -180,13 +180,13 @@ deserialize(?ORACLE_REGISTER_TX_VSN,
 
 serialization_template(?ORACLE_REGISTER_TX_VSN) ->
     [ {account, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {query_spec, binary}
     , {response_spec, binary}
-    , {query_fee, int}
-    , {ttl_type, int}
-    , {ttl_value, int}
-    , {fee, int}
+    , {query_fee, uint}
+    , {ttl_type, uint}
+    , {ttl_value, uint}
+    , {fee, uint}
     ].
 
 -spec version() -> non_neg_integer().

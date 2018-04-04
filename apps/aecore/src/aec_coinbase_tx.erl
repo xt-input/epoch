@@ -109,8 +109,8 @@ deserialize(?CB_TX_VSN,
 
 serialization_template(?CB_TX_VSN) ->
     [ {account, binary}
-    , {height, int}
-    , {reward, int}
+    , {height, uint}
+    , {reward, uint}
     ].
 
 for_client(#coinbase_tx{account = Account, block_height = Height, reward = Reward}) ->

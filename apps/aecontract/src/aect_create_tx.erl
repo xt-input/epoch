@@ -220,14 +220,14 @@ deserialize(?CONTRACT_CREATE_TX_VSN,
 
 serialization_template(?CONTRACT_CREATE_TX_VSN) ->
     [ {owner, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {code, binary}
-    , {vm_version, int}
-    , {fee, int}
-    , {deposit, int}
-    , {amount, int}
-    , {gas, int}
-    , {gas_price, int}
+    , {vm_version, uint}
+    , {fee, uint}
+    , {deposit, uint}
+    , {amount, uint}
+    , {gas, uint}
+    , {gas_price, uint}
     , {call_data, binary}
     ].
 

@@ -18,20 +18,20 @@
 %%%===================================================================
 
 serialize(Type, Vsn, Template, Fields) ->
-    List = encode_fields([{tag, int}      , {vsn, int}|Template],
+    List = encode_fields([{tag, uint}      , {vsn, uint}|Template],
                           [{tag, tag(Type)}, {vsn, Vsn}|Fields]),
     aeu_rlp:encode(List).
 
 deserialize_type_and_vsn(Binary) ->
     [TagBin, VsnBin|Fields] = aeu_rlp:decode(Binary),
-    Template = [{tag, int}, {vsn, int}],
+    Template = [{tag, uint}, {vsn, uint}],
     [{tag, Tag}, {vsn, Vsn}] = decode_fields(Template, [TagBin, VsnBin]),
     {rev_tag(Tag), Vsn, Fields}.
 
 deserialize(Type, Vsn, Template0, Binary) ->
     Tag = tag(Type),
     Decoded = aeu_rlp:decode(Binary),
-    Template = [{tag, int}, {vsn, int}|Template0],
+    Template = [{tag, uint}, {vsn, uint}|Template0],
     case decode_fields(Template, Decoded) of
         [{tag, Tag}, {vsn, Vsn}|Left] ->
             Left;
@@ -62,7 +62,7 @@ encode_list_field(_Field, [],_Type) ->
 encode_list_field(Field, Values, Type) ->
     error({illegal_list, Field, Values, Type}).
 
-encode_field(_Field, int, X) when is_integer(X), X >= 0 ->
+encode_field(_Field, uint, X) when is_integer(X), X >= 0 ->
     binary:encode_unsigned(X);
 encode_field(_Field, binary, X) when is_binary(X) -> X;
 encode_field(_Field, bool, true) -> <<1:8>>;
@@ -87,9 +87,9 @@ decode_list_field(Field, [Val|Left], Type) ->
 decode_list_field(_Field, [],_Type) ->
     [].
 
-decode_field(Field, int, <<0:8, X/binary>> = B) when X =/= <<>> ->
+decode_field(Field, uint, <<0:8, X/binary>> = B) when X =/= <<>> ->
     error({illegal, Field, B});
-decode_field(_Field, int, X) when is_binary(X) -> binary:decode_unsigned(X);
+decode_field(_Field, uint, X) when is_binary(X) -> binary:decode_unsigned(X);
 decode_field(_Field, binary, X) when is_binary(X) -> X;
 decode_field(_Field, bool, <<1:8>>) -> true;
 decode_field(_Field, bool, <<0:8>>) -> false;

@@ -183,13 +183,13 @@ deserialize(?CONTRACT_CALL_TX_VSN,
 
 serialization_template(?CONTRACT_CALL_TX_VSN) ->
     [ {caller, binary}
-    , {nonce, int}
+    , {nonce, uint}
     , {contract, binary}
-    , {vm_version, int}
-    , {fee, int}
-    , {amount, int}
-    , {gas, int}
-    , {gas_price, int}
+    , {vm_version, uint}
+    , {fee, uint}
+    , {amount, uint}
+    , {gas, uint}
+    , {gas_price, uint}
     , {call_data, binary}
     ].
 
