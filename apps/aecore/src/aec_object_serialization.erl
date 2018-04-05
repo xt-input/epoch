@@ -64,6 +64,11 @@ encode_list_field(Field, Values, Type) ->
 
 encode_field(_Field, uint, X) when is_integer(X), X >= 0 ->
     binary:encode_unsigned(X);
+encode_field(_Field, int, X) when is_integer(X), X >= 0 ->
+    binary:encode_unsigned(X);
+encode_field(_Field, int, X) when is_integer(X), X < 0 ->
+    Unsigned = binary:encode_unsigned(abs(X)),
+    <<0:8, Unsigned/binary>>;
 encode_field(_Field, binary, X) when is_binary(X) -> X;
 encode_field(_Field, bool, true) -> <<1:8>>;
 encode_field(_Field, bool, false) -> <<0:8>>;
@@ -90,6 +95,9 @@ decode_list_field(_Field, [],_Type) ->
 decode_field(Field, uint, <<0:8, X/binary>> = B) when X =/= <<>> ->
     error({illegal, Field, B});
 decode_field(_Field, uint, X) when is_binary(X) -> binary:decode_unsigned(X);
+decode_field(_Field, int, <<0:8>>) -> 0;
+decode_field(_Field, int, <<0:8, X/binary >>) -> -1 * binary:decode_unsigned(X);
+decode_field(_Field, int, <<X/binary >>) -> binary:decode_unsigned(X);
 decode_field(_Field, binary, X) when is_binary(X) -> X;
 decode_field(_Field, bool, <<1:8>>) -> true;
 decode_field(_Field, bool, <<0:8>>) -> false;
