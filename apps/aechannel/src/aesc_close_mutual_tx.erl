@@ -81,12 +81,13 @@ origin(#channel_close_mutual_tx{channel_id = ChannelId}) ->
     end.
 
 -spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
-check(#channel_close_mutual_tx{channel_id  = ChannelId,
-                               initiator   = InitiatorPubKey,
-                               participant = ParticipantPubKey,
-                               amount      = Amount,
-                               fee         = Fee,
-                               nonce        = Nonce}, _Context, Trees, Height,
+check(#channel_close_mutual_tx{channel_id       = ChannelId,
+                               from             = _From,
+                               initiator_amount = InitiatorAmount,
+                               responder_amount = ResponderAmount,
+                               ttl              = TTL,
+                               fee              = Fee,
+                               nonce            = Nonce}, _Context, Trees, Height,
                                                 _ConsensusVersion) ->
     case aesc_state_tree:lookup(ChannelId, aec_trees:channels(Trees)) of
         none ->
@@ -102,13 +103,10 @@ check(#channel_close_mutual_tx{channel_id  = ChannelId,
                     end
                 end,
                 fun() -> % check fee
-                    ChannelAmt = aesc_channels:initiator_amount(Channel) +
-                                 aesc_channels:participant_amount(Channel),
-                    ok_or_error(ChannelAmt >= Fee, fee_too_big)
+                    ok_or_error(InitiatorAmount + ResponderAmount >= Fee, fee_too_big)
                 end,
                 fun() -> % check amounts
-                    ChannelAmt = aesc_channels:initiator_amount(Channel) +
-                                 aesc_channels:participant_amount(Channel),
+                    ChannelAmt = aesc_channels:total_amount(Channel),
                     ok_or_error(ChannelAmt =:= InitiatorAmount + ResponderAmount + Fee,
                                 wrong_amounts)
                 end,
@@ -125,12 +123,13 @@ check(#channel_close_mutual_tx{channel_id  = ChannelId,
     end.
 
 -spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
-process(#channel_close_mutual_tx{channel_id  = ChannelId,
-                                 initiator   = InitiatorPubKey,
-                                 participant = ParticipantPubKey,
-                                 amount      = Amount,
-                                 fee         = Fee,
-                                 nonce        = Nonce}, _Context, Trees, Height,
+process(#channel_close_mutual_tx{channel_id       = ChannelId,
+                                 from             = _From,
+                                 initiator_amount = InitiatorAmount0,
+                                 responder_amount = ResponderAmount0,
+                                 ttl              = _TTL,
+                                 fee              = Fee,
+                                 nonce            = _Nonce}, _Context, Trees, Height,
                                                   _ConsensusVersion) ->
     AccountsTree0 = aec_trees:accounts(Trees),
     ChannelsTree0 = aec_trees:channels(Trees),
