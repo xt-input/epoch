@@ -19,6 +19,7 @@
         , origin/1
         , process/4
         , process_from_contract/4
+        , is_verifiable/1
         , serialize_for_client/1
         , serialize_to_binary/1
         , signers/1
@@ -134,6 +135,11 @@
 -callback for_client(Tx :: tx_instance()) ->
     map().
 
+-callback is_verifiable(Tx :: tx_instance()) ->
+    boolean().
+
+-optional_callbacks([is_verifiable/1]).
+
 %% -- ADT Implementation -----------------------------------------------------
 
 -spec new(CallbackModule :: module(),  Tx :: tx_instance()) ->
@@ -242,6 +248,22 @@ type_to_cb(channel_close_mutual_tx) -> aesc_close_mutual_tx;
 type_to_cb(channel_slash_tx)        -> aesc_slash_tx;
 type_to_cb(channel_settle_tx)       -> aesc_settle_tx;
 type_to_cb(channel_offchain_tx)     -> aesc_offchain_tx.
+
+-spec is_verifiable(Tx :: tx()) -> boolean().
+is_verifiable(Tx) ->
+    call_optional_callback(Tx, is_verifiable, [], true).
+
+
+call_optional_callback(#aetx{ cb = CB, tx = Tx }, FunAtom, Params0, Default) ->
+    Params = [Tx | Params0],
+    Arity = length(Params),
+    case erlang:function_exported(CB, FunAtom, Arity) of
+        true ->
+            apply(CB, FunAtom, Params);
+        false ->
+            Default
+    end.
+
 
 -spec is_coinbase(Tx :: tx()) -> boolean().
 is_coinbase(#aetx{ type = Type }) ->
