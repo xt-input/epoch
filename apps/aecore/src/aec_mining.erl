@@ -80,7 +80,8 @@ get_txs_to_mine_in_pool() ->
         -> {ok, aec_blocks:block(), aec_pow:nonce()} | {error, term()}.
 create_micro_block_candidate(Txs, TopBlock, TopBlockTrees) ->
     _Height = aec_blocks:height(TopBlock) + 1, %% TODO: XXX move height to block, remove from coinbase
-    Block = aec_blocks:new(TopBlock, Txs, TopBlockTrees).
+    Block = aec_blocks:new(TopBlock, Txs, TopBlockTrees),
+    {ok, Block}.
 
 -spec create_signed_coinbase_tx(integer()) -> {ok, aetx_sign:signed_tx()} | {error, term()}.
 create_signed_coinbase_tx(Height) ->

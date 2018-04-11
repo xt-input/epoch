@@ -27,12 +27,17 @@
 %%%===================================================================
 
 -spec from_txs([aetx_sign:signed_tx(), ...]) -> txs_tree().
+from_txs([]) -> empty();
 from_txs(Txs = [_|_]) ->
     lists:foldl(fun enter_signed_tx/2, empty(), Txs).
 
 -spec root_hash(txs_tree()) -> {ok, root_hash()}.
 root_hash(TxsTree) ->
-    {ok, <<_:?TXS_HASH_BYTES/unit:8>>} = aeu_mtrees:root_hash(TxsTree).
+    % {ok, <<_:?TXS_HASH_BYTES/unit:8>>} =
+    case aeu_mtrees:root_hash(TxsTree) of
+        {error, empty} -> {ok, <<>>};
+        {ok, <<_:?TXS_HASH_BYTES/unit:8>>} = X -> X
+    end.
 
 %%%===================================================================
 %%% Internal functions

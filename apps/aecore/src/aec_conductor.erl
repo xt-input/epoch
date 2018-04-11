@@ -384,6 +384,8 @@ worker_timeout(create_micro_block_candidate) ->
     infinity;
 worker_timeout(mining) ->
     aeu_env:get_env(aecore, mining_attempt_timeout, ?DEFAULT_MINING_ATTEMPT_TIMEOUT);
+worker_timeout(micro_signing) ->
+    infinity;
 worker_timeout(wait_for_keys) ->
     infinity.
 
