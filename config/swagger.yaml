@@ -2560,18 +2560,11 @@ definitions:
     properties:
       channel_id:
         type: string
-      from_account:
-        $ref: '#/definitions/EncodedHash'
-      to_account:
-        $ref: '#/definitions/EncodedHash'
+      from:
       amount:
         type: integer
         format: int64
         minimum: 0
-      initiator:
-        $ref: '#/definitions/EncodedHash'
-      participant:
-        $ref: '#/definitions/EncodedHash'
       fee:
         type: integer
         format: int64
@@ -2582,11 +2575,8 @@ definitions:
         minimum: 0
     required:
     - channel_id
-    - from_account
-    - to_account
+    - from
     - amount
-    - initiator
-    - participant
     - fee
     - nonce
   ChannelWithdrawalTx:
@@ -2594,18 +2584,12 @@ definitions:
     properties:
       channel_id:
         type: string
-      from_account:
-        $ref: '#/definitions/EncodedHash'
-      to_account:
+      to:
         $ref: '#/definitions/EncodedHash'
       amount:
         type: integer
         format: int64
         minimum: 0
-      initiator:
-        $ref: '#/definitions/EncodedHash'
-      participant:
-        $ref: '#/definitions/EncodedHash'
       fee:
         type: integer
         format: int64
@@ -2616,11 +2600,8 @@ definitions:
         minimum: 0
     required:
     - channel_id
-    - from_account
-    - to_account
+    - to
     - amount
-    - initiator
-    - participant
     - fee
     - nonce
   ChannelCloseMutualTx:
