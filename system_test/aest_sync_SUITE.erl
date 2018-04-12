@@ -8,10 +8,13 @@
 -export([end_per_testcase/2]).
 
 % Test cases
--export([new_node_joins_network/1,
-         docker_keeps_data/1,
-         crash_and_continue_sync/1,
-         net_split_recovery/1]).
+-export([
+    new_node_joins_network/1,
+    docker_keeps_data/1,
+    crash_and_continue_sync/1,
+    net_split_recovery/1,
+    many_nodes_stay_in_sync/1
+]).
 
 -import(aest_nodes, [
     setup_nodes/2,
@@ -113,10 +116,11 @@
 %=== COMMON TEST FUNCTIONS =====================================================
 
 all() -> [
-    new_node_joins_network
-    , docker_keeps_data
-    , crash_and_continue_sync
-    , net_split_recovery
+    new_node_joins_network,
+    docker_keeps_data,
+    crash_and_continue_sync,
+    net_split_recovery,
+    many_nodes_stay_in_sync
 ].
 
 init_per_testcase(_TC, Config) ->
@@ -385,6 +389,28 @@ net_split_recovery(Cfg) ->
     ?assertEqual(D1, D4),
 
     ok.
+
+many_nodes_stay_in_sync(Cfg) ->
+    Nodes = 20,
+    Height = 100,
+    Names = [list_to_atom("n" ++ io_lib:print(N)) || N <- lists:seq(1, Nodes)],
+    Specs = [#{
+        name => Name,
+        peers => Names -- [Name],
+        backend => aest_docker,
+        source  => {pull, "aeternity/epoch:local"}
+    } || Name <- Names],
+    setup_nodes(Specs, Cfg),
+    [start_node(Name, Cfg) || Name <- Names],
+
+    wait_for_height(Height, Names, Height * Nodes * ?MINING_TIMEOUT, Cfg),
+    Blocks = [
+        {Name, request(Name, [v2, 'block-by-height'], #{height => Height}, Cfg)}
+        || Name <- Names
+    ],
+
+    Results = [?assertEqual(B1, B2) || {N1, B1} <- Blocks, {N2, B2} <- Blocks, N1 =/= N2],
+    ct:pal("Number of asserts: ~b", [length(Results)]).
 
 %=== INTERNAL FUNCTIONS ========================================================
 
