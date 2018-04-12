@@ -90,7 +90,7 @@ create_negative(Cfg) ->
     {error, account_not_found} =
         aetx:check(Tx1, Trees, Height, ?CONSENSUS_V_0_11_0_VERSION),
 
-    %% Test bad participant account key
+    %% Test bad responder account key
     TxSpec2 = aesc_test_utils:create_tx_spec(PubKey1, BadPubKey, S2),
     {ok, Tx2} = aesc_create_tx:new(TxSpec2),
     {error, account_not_found} =
@@ -107,12 +107,12 @@ create_negative(Cfg) ->
     {error, insufficient_funds} =
         aetx:check(Tx3, Trees3, Height, ?CONSENSUS_V_0_11_0_VERSION),
 
-    %% Test insufficient participant funds
+    %% Test insufficient responder funds
     S4 = aesc_test_utils:set_account_balance(PubKey2, 11, S2),
     Trees4 = aesc_test_utils:trees(S4),
     TxSpec4 = aesc_test_utils:create_tx_spec(
                 PubKey1, PubKey2,
-                #{participant_amount => 12}, S4),
+                #{responder_amount => 12}, S4),
     {ok, Tx4} = aesc_create_tx:new(TxSpec4),
     {error, insufficient_funds} =
         aetx:check(Tx4, Trees4, Height, ?CONSENSUS_V_0_11_0_VERSION),
@@ -131,12 +131,12 @@ create_negative(Cfg) ->
     {error, insufficient_initiator_amount} =
         aetx:check(Tx6, Trees, Height, ?CONSENSUS_V_0_11_0_VERSION),
 
-    %% Test participant funds lower than channel reserve
+    %% Test responder funds lower than channel reserve
     TxSpec7 = aesc_test_utils:create_tx_spec(PubKey1, PubKey2,
-                                             #{participant_amount => 5,
+                                             #{responder_amount => 5,
                                                channel_reserve => 8}, S2),
     {ok, Tx7} = aesc_create_tx:new(TxSpec7),
-    {error, insufficient_participant_amount} =
+    {error, insufficient_responder_amount} =
         aetx:check(Tx7, Trees, Height, ?CONSENSUS_V_0_11_0_VERSION),
 
     %% Test channel already present

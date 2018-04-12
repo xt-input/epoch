@@ -2520,9 +2520,9 @@ definitions:
         type: integer
         format: int64
         minimum: 0
-      participant:
+      responder:
         $ref: '#/definitions/EncodedHash'
-      participant_amount:
+      responder_amount:
         type: integer
         format: int64
         minimum: 0
@@ -2538,6 +2538,10 @@ definitions:
         type: integer
         format: int64
         minimum: 0
+      ttl:
+        type: integer
+        format: int64
+        minimum: 0
       fee:
         type: integer
         format: int64
@@ -2549,11 +2553,12 @@ definitions:
     required:
     - initiator
     - initiator_amount
-    - participant
-    - participant_amount
+    - responder
+    - responder_amount
     - push_amount
     - channel_reserve
     - lock_period
+    - ttl 
     - fee
   ChannelDepositTx:
     type: object
