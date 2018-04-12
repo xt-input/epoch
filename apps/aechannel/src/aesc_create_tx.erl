@@ -54,8 +54,8 @@
 %% TODO remove first head as soon as participant turns into a responder
 new(#{initiator          := InitiatorPubKey,
       initiator_amount   := InitiatorAmount,
-      participant        := ResponderPubKey,
-      participant_amount := ResponderAmount,
+      responder          := ResponderPubKey,
+      responder_amount   := ResponderAmount,
       channel_reserve    := ChannelReserve,
       lock_period        := LockPeriod,
       ttl                := TTL,
@@ -158,12 +158,12 @@ process(#channel_create_tx{initiator          = InitiatorPubKey,
 
 -spec accounts(tx()) -> list(pubkey()).
 accounts(#channel_create_tx{initiator   = InitiatorPubKey,
-                            responder = ResponderPubKey}) ->
+                            responder   = ResponderPubKey}) ->
     [InitiatorPubKey, ResponderPubKey].
 
 -spec signers(tx()) -> list(pubkey()).
 signers(#channel_create_tx{initiator   = InitiatorPubKey,
-                           responder = ResponderPubKey}) ->
+                           responder   = ResponderPubKey}) ->
     [InitiatorPubKey, ResponderPubKey].
 
 -spec serialize(tx()) -> {vsn(), list()}.
@@ -179,8 +179,8 @@ serialize(#channel_create_tx{initiator          = InitiatorPubKey,
     {version(),
      [ {initiator         , InitiatorPubKey}
      , {initiator_amount  , InitiatorAmount}
-     , {responder       , ResponderPubKey}
-     , {responder_amount, ResponderAmount}
+     , {responder         , ResponderPubKey}
+     , {responder_amount  , ResponderAmount}
      , {channel_reserve   , ChannelReserve}
      , {lock_period       , LockPeriod}
      , {ttl               , TTL}
