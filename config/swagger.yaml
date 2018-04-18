@@ -2566,7 +2566,12 @@ definitions:
       channel_id:
         type: string
       from:
+        $ref: '#/definitions/EncodedHash'
       amount:
+        type: integer
+        format: int64
+        minimum: 0
+      ttl:
         type: integer
         format: int64
         minimum: 0
@@ -2582,6 +2587,7 @@ definitions:
     - channel_id
     - from
     - amount
+    - ttl
     - fee
     - nonce
   ChannelWithdrawalTx:
@@ -2592,6 +2598,10 @@ definitions:
       to:
         $ref: '#/definitions/EncodedHash'
       amount:
+        type: integer
+        format: int64
+        minimum: 0
+      ttl:
         type: integer
         format: int64
         minimum: 0
@@ -2607,6 +2617,7 @@ definitions:
     - channel_id
     - to
     - amount
+    - ttl
     - fee
     - nonce
   ChannelCloseMutualTx:
