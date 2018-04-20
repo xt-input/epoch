@@ -3449,13 +3449,13 @@ external_address() ->
     Port = rpc(aeu_env, user_config_or_env,
               [ [<<"http">>, <<"external">>, <<"port">>],
                 aehttp, [external, port], 8043]),
-    aeu_requests:pp_uri({http, "127.0.0.1", Port}). % good enough for requests
+    aehttp_client:base_url(http, "127.0.0.1", Port). % good enough for requests
 
 internal_address() ->
     Port = rpc(aeu_env, user_config_or_env,
               [ [<<"http">>, <<"internal">>, <<"port">>],
                 aehttp, [internal, port], 8143]),
-    aeu_requests:pp_uri({http, "127.0.0.1", Port}).
+    aehttp_client:base_url(http, "127.0.0.1", Port).
 
 ws_host_and_port() ->
     Port = rpc(aeu_env, user_config_or_env,
