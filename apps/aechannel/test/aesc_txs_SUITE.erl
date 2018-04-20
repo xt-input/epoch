@@ -185,7 +185,7 @@ close_solo(Cfg) ->
     ParticipantEndBalance = ChannelAmount - InitiatorEndBalance,
     %% Create close_solo tx and apply it on state trees
     PayloadSpec = #{initiator_amount => InitiatorEndBalance,
-                    participant_amount => ParticipantEndBalance},
+                    responder_amount => ParticipantEndBalance},
     Payload = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpec),
     Test =
@@ -229,7 +229,7 @@ close_solo_negative(Cfg) ->
     InitiatorEndBalance = rand:uniform(ChannelAmount - 2) + 1,
     ParticipantEndBalance = ChannelAmount - InitiatorEndBalance,
     PayloadSpec = #{initiator_amount => InitiatorEndBalance,
-                    participant_amount => ParticipantEndBalance},
+                    responder_amount => ParticipantEndBalance},
     Payload = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpec),
     %% Test bad from account key
@@ -244,7 +244,7 @@ close_solo_negative(Cfg) ->
     TestWrongAmounts =
         fun(IAmt, PAmt) ->
             PayloadSpecW = #{initiator_amount => IAmt,
-                            participant_amount => PAmt},
+                            responder_amount => PAmt},
             PayloadW = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpecW),
             TxSpecW = aesc_test_utils:close_solo_tx_spec(ChannelId, PubKey1,
@@ -715,8 +715,8 @@ slash(Cfg) ->
     ParticipantEndBalance = ChannelAmount - InitiatorEndBalance,
     %% Create close_solo tx and apply it on state trees
     PayloadSpec = #{initiator_amount => InitiatorEndBalance,
-                    participant_amount => ParticipantEndBalance,
-                    sequence_number => 12}, % greater than default of 11
+                    responder_amount => ParticipantEndBalance,
+                    round => 13}, % greater than default of 11
     Payload = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpec),
     Test =
@@ -764,7 +764,7 @@ slash_negative(Cfg) ->
     InitiatorEndBalance = rand:uniform(ChannelAmount - 2) + 1,
     ParticipantEndBalance = ChannelAmount - InitiatorEndBalance,
     PayloadSpec = #{initiator_amount => InitiatorEndBalance,
-                    participant_amount => ParticipantEndBalance},
+                    responder_amount => ParticipantEndBalance},
     Payload = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpec),
 
@@ -787,7 +787,7 @@ slash_negative(Cfg) ->
     TestWrongAmounts =
         fun(IAmt, PAmt) ->
             PayloadSpecW = #{initiator_amount => IAmt,
-                            participant_amount => PAmt},
+                            responder_amount => PAmt},
             PayloadW = aesc_test_utils:payload(ChannelId, PubKey1, PubKey2,
                                       [PrivKey1, PrivKey2], PayloadSpecW),
             TxSpecW = aesc_test_utils:slash_tx_spec(ChannelId, PubKey1,
@@ -899,7 +899,7 @@ settle(Cfg) ->
     Test =
         fun(From, IAmt, PAmt, Fee) ->
             Ch = aesc_test_utils:close_solo(Ch0, #{initiator_amount => IAmt,
-                                                   participant_amount => PAmt}),
+                                                   responder_amount => PAmt}),
             ClosesAt = aesc_channels:closes_at(Ch),
             ChannelAmount = IAmt + PAmt, %% assert
 
@@ -959,7 +959,7 @@ settle_negative(Cfg) ->
 
     %% Test not closed yet 
     Ch = aesc_test_utils:close_solo(Ch0, #{initiator_amount => ChannelAmount,
-                                           participant_amount => 0}),
+                                           responder_amount => 0}),
     ClosesAt = aesc_channels:closes_at(Ch),
     S   = aesc_test_utils:set_channel(Ch, S0),
     ChannelAmount = aesc_channels:total_amount(Ch),

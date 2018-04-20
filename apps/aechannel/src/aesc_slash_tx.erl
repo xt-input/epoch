@@ -272,7 +272,7 @@ check_solo_closing(Channel, Height) ->
     end.
 
 check_seq_number(State, Channel) ->
-    case aesc_channels:sequence_number(Channel) < aesc_offchain_tx:sequence_number(State) of
+    case aesc_channels:sequence_number(Channel) < aesc_offchain_tx:round(State) of
         true  -> ok;
         false -> {error, state_seq_number_too_small}
     end.

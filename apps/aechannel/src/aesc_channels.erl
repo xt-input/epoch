@@ -28,7 +28,7 @@
          responder/1,
          total_amount/1,
          initiator_amount/1,
-         participant_amount/1,
+         responder_amount/1,
          channel_reserve/1,
          sequence_number/1,
          closes_at/1]).
@@ -78,7 +78,7 @@ close_solo(#channel{lock_period = LockPeriod} = Ch, State, Height) ->
     ClosesAt = Height + LockPeriod,
     Ch#channel{initiator_amount = aesc_offchain_tx:initiator_amount(State),
                total_amount     = aesc_offchain_tx:initiator_amount(State) + aesc_offchain_tx:responder_amount(State),
-               sequence_number  = aesc_offchain_tx:sequence_number(State),
+               sequence_number  = aesc_offchain_tx:round(State),
                closes_at        = ClosesAt,
                status           = solo_closing}.
 
@@ -181,7 +181,7 @@ slash(#channel{lock_period = LockPeriod} = Ch, State, Height) ->
     ClosesAt = Height + LockPeriod,
     Ch#channel{initiator_amount = aesc_offchain_tx:initiator_amount(State),
                total_amount     = aesc_offchain_tx:initiator_amount(State) + aesc_offchain_tx:responder_amount(State),
-               sequence_number  = aesc_offchain_tx:sequence_number(State),
+               sequence_number  = aesc_offchain_tx:round(State),
                closes_at        = ClosesAt}.
 
 -spec withdraw(channel(), amount()) -> channel().
@@ -216,8 +216,8 @@ total_amount(#channel{total_amount = TotalAmount}) ->
 initiator_amount(#channel{initiator_amount = InitiatorAmount}) ->
     InitiatorAmount.
 
--spec participant_amount(channel()) -> amount().
-participant_amount(#channel{initiator_amount = InitiatorAmount,
+-spec responder_amount(channel()) -> amount().
+responder_amount(#channel{initiator_amount = InitiatorAmount,
                             total_amount = TotalAmount}) ->
     TotalAmount - InitiatorAmount.
 
