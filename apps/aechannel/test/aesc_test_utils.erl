@@ -330,21 +330,21 @@ state_tx(ChannelId, Initiator, Responder, Spec0) ->
             #{channel_id         => ChannelId,
               initiator          => Initiator,
               responder          => Responder,
+              updates            => maps:get(updates, Spec, []),
               initiator_amount   => maps:get(initiator_amount, Spec),
               responder_amount   => maps:get(responder_amount, Spec),
-              state              => maps:get(state, Spec),
-              round              => maps:get(round, Spec),
-              updates            => [],
-              previous_round     => maps:get(previous_round, Spec)}),
+              state              => maps:get(state, Spec, <<>>),
+              previous_round     => maps:get(previous_round, Spec),
+              round              => maps:get(round, Spec)}),
     StateTx.
 
 state_tx_spec() ->
     #{initiator_amount   => 3,
       responder_amount   => 4,
       state              => <<"state..">>,
-      previous_round     => 11,
-      round              => 12}.
+      previous_round     => 10,
+      round              => 11}.
 
-payload(ChannelId, Initiator, Participant, SignersPrivKeys, Spec) ->
-    StateTx = state_tx(ChannelId, Initiator, Participant, Spec),
+payload(ChannelId, Initiator, Responder, SignersPrivKeys, Spec) ->
+    StateTx = state_tx(ChannelId, Initiator, Responder, Spec),
     aetx_sign:serialize_to_binary(aetx_sign:sign(StateTx, SignersPrivKeys)). %% No signatures
