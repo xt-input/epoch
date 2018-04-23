@@ -377,6 +377,22 @@ jobs:
       - store_artifacts:
           path: /tmp/chain_snapshots
 
+  docker_system_tests:
+    <<: *container_config
+    steps:
+      - checkout
+      - *setup_remote_docker
+      - *install_docker_client
+      - run:
+          name: Build Docker local image
+          command: |
+            ~/bin/docker build -t ${DOCKERHUB_REPO:?}:local .
+      - run:
+          name: System Tests
+          command: |
+            make system-test
+      # - *fail_notification
+
   deploy_integration:
     <<: *container_config
     environment:
@@ -528,6 +544,13 @@ workflows:
           filters:
             branches:
               only: master
+
+      - docker_system_tests:
+          filters:
+            branches:
+              ignore:
+                - env/dev1
+                - env/dev2
 
       - deploy_dev1:
           requires:
