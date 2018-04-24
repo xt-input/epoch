@@ -385,11 +385,9 @@ jobs:
       - *install_docker_client
       - run:
           name: Prepare docker images
-          environment:
-            - DOCKER_BIN: ~/bin/docker
           command: |
-            ${DOCKER_BIN:?} build -t ${DOCKERHUB_REPO:?}:local .
-            make system-test-deps
+            ~/bin/docker build -t ${DOCKERHUB_REPO:?}:local .
+            make system-test-deps DOCKER_BIN=~/bin/docker
       - run:
           name: System Tests
           command: |
