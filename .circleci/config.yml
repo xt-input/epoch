@@ -392,6 +392,10 @@ jobs:
           command: |
             make system-test
       # - *fail_notification
+      - store_test_results:
+          path: system_test/logs
+      - store_artifacts:
+          path: system_test/logs
 
   deploy_integration:
     <<: *container_config
