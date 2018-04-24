@@ -364,6 +364,7 @@ url(Path) -> url(Path, #{}).
 url(Path, QS) when is_list(Path) ->
     BaseUrl = os:getenv("DOCKER_HOST", ?BASE_URL),
     BaseUrl1 = lists:concat(string:replace(BaseUrl, "tcp", "http")),
+    ct:log("BaseUrl1: ~p", [BaseUrl1]),
     hackney_url:make_url(BaseUrl1, [to_binary(P) || P <- Path], maps:to_list(QS));
 url(Item, QS) ->
     url([Item], QS).
