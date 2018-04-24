@@ -12,6 +12,12 @@ references:
       DOCKER_CLIENT_VERSION: "17.09.0-ce"
       DOCKERHUB_REPO: aeternity/epoch
 
+  machine_config: &machine_config
+    machine: true
+    working_directory: ~/epoch
+    environment:
+      DOCKERHUB_REPO: aetrnty/epoch
+
   setup_remote_docker: &setup_remote_docker
     setup_remote_docker:
       docker_layer_caching: true
@@ -378,15 +384,13 @@ jobs:
           path: /tmp/chain_snapshots
 
   docker_system_tests:
-    <<: *container_config
+    <<: *machine_config
     steps:
       - checkout
-      - *setup_remote_docker
-      - *install_docker_client
       - run:
           name: Build Docker local image
           command: |
-            ~/bin/docker build -t ${DOCKERHUB_REPO:?}:local .
+            docker build -t ${DOCKERHUB_REPO:?}:local .
       - run:
           name: System Tests
           command: |
