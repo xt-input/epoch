@@ -384,9 +384,12 @@ jobs:
       - *setup_remote_docker
       - *install_docker_client
       - run:
-          name: Build Docker local image
+          name: Prepare docker images
+          environment:
+            - DOCKER_BIN: ~/bin/docker
           command: |
-            ~/bin/docker build -t ${DOCKERHUB_REPO:?}:local .
+            ${DOCKER_BIN:?} build -t ${DOCKERHUB_REPO:?}:local .
+            make system-test-deps
       - run:
           name: System Tests
           command: |
