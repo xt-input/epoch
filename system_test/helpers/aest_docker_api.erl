@@ -271,8 +271,9 @@ docker_get(Path) -> docker_get(Path, #{}, #{}).
 docker_get(Path, Query, Opts) ->
     ResultType = maps:get(result_type, Opts, json),
     Timeout = maps:get(timeout, Opts, ?DEFAULT_TIMEOUT),
-    ReqRes = hackney:request(get, url(Path, Query), [], <<>>,
-                             [{recv_timeout, Timeout}]),
+    ReqOpts = [{recv_timeout, Timeout}] ++ ssl_options(),
+    ct:log("ReqOpts: ~p", [ReqOpts]),
+    ReqRes = hackney:request(get, url(Path, Query), [], <<>>, ReqOpts),
     case ReqRes of
         {error, _Reason} = Error -> Error;
         {ok, Status, _RespHeaders, ClientRef} ->
@@ -287,8 +288,9 @@ docker_delete(Path) -> docker_delete(Path, #{}).
 docker_delete(Path, Opts) ->
     ResultType = maps:get(result_type, Opts, json),
     Timeout = maps:get(timeout, Opts, ?DEFAULT_TIMEOUT),
-    ReqRes = hackney:request(delete, url(Path), [], <<>>,
-                             [{recv_timeout, Timeout}]),
+    ReqOpts = [{recv_timeout, Timeout}] ++ ssl_options(),
+    ct:log("ReqOpts: ~p", [ReqOpts]),
+    ReqRes = hackney:request(delete, url(Path), [], <<>>, ReqOpts),
     case ReqRes of
         {error, _Reason} = Error -> Error;
         {ok, Status, _RespHeaders, ClientRef} ->
@@ -307,10 +309,11 @@ docker_post(Path, Query, BodyObj) -> docker_post(Path, Query, BodyObj, #{}).
 docker_post(Path, Query, BodyObj, Opts) ->
     ResultType = maps:get(result_type, Opts, json),
     Timeout = maps:get(timeout, Opts, ?DEFAULT_TIMEOUT),
+    ReqOpts = [{recv_timeout, Timeout}] ++ ssl_options(),
+    ct:log("ReqOpts: ~p", [ReqOpts]),
     BodyJSON = encode(BodyObj),
     Headers = [{<<"Content-Type">>, <<"application/json">>}],
-    ReqRes = hackney:request(post, url(Path, Query), Headers, BodyJSON,
-                             [{recv_timeout, Timeout}]),
+    ReqRes = hackney:request(post, url(Path, Query), Headers, BodyJSON, ReqOpts),
     case ReqRes of
         {error, _Reason} = Error -> Error;
         {ok, Status, _RespHeaders, ClientRef} ->
@@ -324,8 +327,11 @@ docker_put(Path, Query, Body) -> docker_put(Path, Query, Body, #{}).
 
 docker_put(Path, Query, Body, Opts) ->
     ResultType = maps:get(result_type, Opts, json),
+    Timeout = maps:get(timeout, Opts, ?DEFAULT_TIMEOUT),
+    ReqOpts = [{recv_timeout, Timeout}] ++ ssl_options(),
+    ct:log("ReqOpts: ~p", [ReqOpts]),
     %% Content type?
-    case hackney:request(put, url(Path, Query), [], Body, []) of
+    case hackney:request(put, url(Path, Query), [], Body, ReqOpts) of
         {error, _Reason} = Error -> Error;
         {ok, Status, _RespHeaders, ClientRef} ->
             case docker_fetch_json_body(ClientRef, ResultType) of
@@ -359,15 +365,39 @@ json_string(Bin) when is_binary(Bin) -> Bin;
 json_string(Str) when is_list(Str) -> list_to_binary(Str);
 json_string(Num) when is_number(Num) -> format("~w", [Num]).
 
+ssl_options() ->
+    case os:getenv("DOCKER_CERT_PATH") of
+        false -> [];
+        CertsPath ->
+            [{ssl_options, [
+                {cacertfile, CertsPath ++ "/ca.pem"},
+                {certfile, CertsPath ++ "/cert.pem"},
+                {keyfile, CertsPath ++ "/key.pem"}]
+            }]
+    end.
+
+
+
 url(Path) -> url(Path, #{}).
 
 url(Path, QS) when is_list(Path) ->
-    BaseUrl = os:getenv("DOCKER_HOST", ?BASE_URL),
-    BaseUrl1 = lists:concat(string:replace(BaseUrl, "tcp", "http")),
-    ct:log("BaseUrl1: ~p", [BaseUrl1]),
-    hackney_url:make_url(BaseUrl1, [to_binary(P) || P <- Path], maps:to_list(QS));
+    BaseUrl = base_url(),
+    ct:log("BaseUrl: ~p", [BaseUrl]),
+    hackney_url:make_url(BaseUrl, [to_binary(P) || P <- Path], maps:to_list(QS));
 url(Item, QS) ->
     url([Item], QS).
+
+base_url() ->
+    case os:getenv("DOCKER_HOST") of
+        false -> ?BASE_URL;
+        BaseUrl -> lists:concat(string:replace(BaseUrl, "tcp", url_schema()))
+    end.
+
+url_schema() ->
+    case os:getenv("DOCKER_TLS_VERIFY") of
+        "1" -> "https";
+        _ -> "http"
+    end.
 
 to_binary(Term) when is_atom(Term) -> atom_to_binary(Term, utf8);
 to_binary(Term)                    -> Term.
