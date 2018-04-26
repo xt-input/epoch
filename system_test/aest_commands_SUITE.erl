@@ -22,8 +22,8 @@
 
 %=== MACROS ====================================================================
 
--define(MINING_TIMEOUT, 2000).
--define(STARTUP_TIMEOUT, 5000).
+-define(MINING_TIMEOUT, 20000).
+-define(STARTUP_TIMEOUT, 50000).
 
 -define(NODE1, #{
     name    => node1,
