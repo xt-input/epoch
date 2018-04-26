@@ -113,19 +113,23 @@ version(#spend_tx{vsn = Vsn}) ->
 -spec check(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()} | {error, term()}.
 check(#spend_tx{vsn = Vsn} = SpendTx, _Context, Trees0, Height, ConsensusVersion)
   when ?is_tx_vsn_applicable_at_consensus_vsn(Vsn, ConsensusVersion) ->
-    RecipientPubkey = recipient(SpendTx),
+  RecipientPubkeyOrName = recipient(SpendTx),
     Checks = [fun check_tx_fee/3,
               fun check_sender_account/3],
     case aeu_validation:run(Checks, [SpendTx, Trees0, Height]) of
+        {error, _Reason} = Error -> Error;
         ok ->
-            case aec_trees:ensure_account_at_height(RecipientPubkey, Trees0, Height) of
-                {ok, Trees} ->
-                    {ok, Trees};
-                {error, account_height_too_big} ->
-                    {error, recipient_account_height_too_big}
-            end;
-        {error, _Reason} = Error ->
-            Error
+            NSTrees0 = aec_trees:ns(Trees0),
+            case aens:resolve_decoded_to_account_pubkey(RecipientPubkeyOrName, NSTrees0) of
+                {error, _Reason} = Error -> Error;
+                {ok, RecipientPubkey} ->
+                    case aec_trees:ensure_account_at_height(RecipientPubkey, Trees0, Height) of
+                        {ok, Trees} ->
+                            {ok, Trees};
+                        {error, account_height_too_big} ->
+                            {error, recipient_account_height_too_big}
+                    end
+            end
     end;
 check(#spend_tx{vsn = Vsn}, _Context, _Trees0, _Height, ConsensusVersion)
   when not ?is_tx_vsn_applicable_at_consensus_vsn(Vsn, ConsensusVersion) ->
@@ -140,17 +144,21 @@ signers(#spend_tx{sender = SenderPubKey}) -> [SenderPubKey].
 
 -spec process(tx(), aetx:tx_context(), aec_trees:trees(), height(), non_neg_integer()) -> {ok, aec_trees:trees()}.
 process(#spend_tx{sender = SenderPubkey,
-                  recipient = RecipientPubkey,
+                  recipient = RecipientPubkeyOrName,
                   amount = Amount,
                   fee = Fee,
                   nonce = Nonce,
                   vsn = Vsn}, _Context, Trees0, Height, ConsensusVersion)
   when ?is_tx_vsn_applicable_at_consensus_vsn(Vsn, ConsensusVersion) ->
     AccountsTrees0 = aec_trees:accounts(Trees0),
+    NSTrees0 = aec_trees:ns(Trees0),
 
     {value, SenderAccount0} = aec_accounts_trees:lookup(SenderPubkey, AccountsTrees0),
     {ok, SenderAccount} = aec_accounts:spend(SenderAccount0, Amount + Fee, Nonce, Height),
     AccountsTrees1 = aec_accounts_trees:enter(SenderAccount, AccountsTrees0),
+
+    % possible errors have been filtered previously which check -> ensure_account_at_height
+    {ok, RecipientPubkey} = aens:resolve_decoded_to_account_pubkey(RecipientPubkeyOrName, NSTrees0),
 
     {value, RecipientAccount0} = aec_accounts_trees:lookup(RecipientPubkey, AccountsTrees1),
     {ok, RecipientAccount} = aec_accounts:earn(RecipientAccount0, Amount, Height),

@@ -9,6 +9,7 @@
 
 %% API
 -export([resolve/3,
+         resolve_decoded_to_account_pubkey/2,
          get_commitment_hash/2,
          get_name_entry/2,
          get_name_hash/1]).
@@ -22,6 +23,25 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+
+-spec resolve_decoded_to_account_pubkey(binary(), aens_state_tree:tree()) -> {ok, binary()} | {error, atom()}.
+resolve_decoded_to_account_pubkey(PubKeyOrName, NSTree) ->
+  case is_name(PubKeyOrName) of
+    false ->
+      % this is pub key, not name
+      {ok, PubKeyOrName};
+    true ->
+      % resolves name to account_pubkey, otherwise returns error
+      case get_name(PubKeyOrName, NSTree) of
+        {ok, #{<<"pointers">> := Pointers}} ->
+          case proplists:get_value(atom_to_binary(account_pubkey, utf8), Pointers) of
+            undefined -> {error, undefinded_account_pubkey_pointer};
+            Val       -> aec_base58c:safe_decode(account_pubkey, Val)
+          end;
+        {error, _Reason} = Error -> Error
+      end
+  end.
 
 -spec resolve(atom(), binary(), aens_state_tree:tree()) -> {ok, binary()} | {error, atom()}.
 resolve(Type, Binary, NSTree) ->

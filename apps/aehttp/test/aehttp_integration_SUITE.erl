@@ -2255,19 +2255,17 @@ naming_spend_to_name(_Config) ->
     Amount = 5,
     MineReward  = rpc(aec_governance, block_mine_reward, []),
     NamePubKey = random_hash(),
-
     NamePubKeyEnc   = aec_base58c:encode(account_pubkey, NamePubKey),
     Name        = <<"test.test"/utf8>>,
+    Fee = 1,
 
     naming_pre_claim_claim_update(_Config, Name, NamePubKey),
-
-    ok = rpc(aec_conductor, reinit_chain, []),
 
     {ok, 200, #{<<"pub_key">> := EncodedPubKey}} = get_miner_pub_key(),
     aecore_suite_utils:mine_blocks(aecore_suite_utils:node_name(?NODE), 5),
     {ok, 200, #{<<"balance">> := Balance}} = get_balance_at_top(EncodedPubKey),
 
-    add_spend_tx_to_name(Name, Amount), % in mempool
+    post_spend_tx(Name, Amount, Fee),
 
     {ok, [Block]} = aecore_suite_utils:mine_blocks(aecore_suite_utils:node_name(?NODE), 1),
     {ok, []} = rpc(aec_tx_pool, peek, [infinity]),
@@ -2288,9 +2286,9 @@ naming_spend_to_name(_Config) ->
     {ok, 200, #{<<"balance">> := ExpectedBalance}} = get_balance_at_top(EncodedPubKey),
 
     % checks that the name was resolved and the pointer account was credited balance from spend tx
-    %{ok, 200, #{<<"balance">> := Amount}} = get_balance_at_top(NamePubKeyEnc),
+    {ok, 200, #{<<"balance">> := Amount}} = get_balance_at_top(NamePubKeyEnc),
 
-    ok.
+  ok.
 
 naming_pre_claim_claim_update(_Config, Name, PubKey) ->
     PubKeyEnc   = aec_base58c:encode(account_pubkey, PubKey),
@@ -3738,11 +3736,6 @@ add_spend_txs() ->
             lists:seq(0, TxsCnt -1)),
     populate_block(#{spend_txs => Txs}),
     TxsCnt.
-
-add_spend_tx_to_name(Name, Amount) ->
-    MinFee = rpc(aec_governance, minimum_tx_fee, []),
-    Tx = #{recipient => Name, amount => Amount, fee => MinFee},
-    populate_block(#{spend_txs => [Tx]}).
 
 populate_block(Txs) ->
     lists:foreach(
