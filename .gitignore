@@ -13,6 +13,7 @@ erl_crash.dump
 logs
 _build
 .idea
+*.iml
 py/bin
 py/include
 py/lib
