@@ -214,7 +214,7 @@
 
 all() ->
     [
-     {group, channel_websocket}%all_endpoints}
+     {group, all_endpoints}
     ].
 
 groups() ->
@@ -413,7 +413,7 @@ init_per_suite(Config) ->
     ct:log("Environment = ~p", [[{args, init:get_arguments()},
                                  {node, node()},
                                  {cookie, erlang:get_cookie()}]]),
-    Forks = aecore_suite_utils:forks(), 
+    Forks = aecore_suite_utils:forks(),
 
     aecore_suite_utils:create_configs(Config1, #{<<"chain">> =>
                                                  #{<<"persist">> => true,
