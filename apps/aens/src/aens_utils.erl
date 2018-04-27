@@ -13,7 +13,8 @@
 -export([check_name_claimed_and_owned/3,
          is_revoked/1,
          to_ascii/1,
-         from_ascii/1]).
+         from_ascii/1,
+         is_valid_name/1]).
 
 %%%===================================================================
 %%% Types
@@ -66,6 +67,17 @@ from_ascii(NameAscii) when is_binary(NameAscii) ->
     NameAsciiList = unicode:characters_to_list(NameAscii, utf8),
     UnicodeName   = idna:from_ascii(NameAsciiList),
     list_to_binary(UnicodeName).
+
+-spec is_valid_name(binary()) -> boolean().
+is_valid_name(Binary) ->
+    case length(binary:split(Binary, ?LABEL_SEPARATOR)) of
+        0 -> false;
+        _ -> case validate_name(Binary) of
+                 ok -> true;
+                 _  -> false
+             end
+    end.
+
 
 %%%===================================================================
 %%% Internal functions

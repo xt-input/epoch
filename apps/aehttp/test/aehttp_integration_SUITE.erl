@@ -255,6 +255,13 @@ groups() ->
         post_broken_tx,
         post_broken_base58_tx,
 
+        % balances
+        all_accounts_balances,
+        all_accounts_balances_empty,
+        all_accounts_balances_disabled,
+        balance,
+        balance_negative_cases,
+
         % transactions
         account_transactions,
 
@@ -2344,9 +2351,9 @@ naming_pre_claim_claim_update(_Config, Name, PubKey) ->
     %% Check that name entry is present
     EncodedNHash = aec_base58c:encode(name, NHash),
     {ok, 200, #{<<"name">>      := Name,
-      <<"name_hash">> := EncodedNHash,
-      <<"name_ttl">>  := 0,
-      <<"pointers">>  := <<"[]">>}} = get_name(Name),
+                <<"name_hash">> := EncodedNHash,
+                <<"name_ttl">>  := 0,
+                <<"pointers">>  := <<"[]">>}} = get_name(Name),
 
     %% Submit name updated tx and check it is in mempool
     {ok, 200, _}               = post_name_update_tx(NHash, NameTTL, Pointers, TTL, Fee),
@@ -2360,9 +2367,8 @@ naming_pre_claim_claim_update(_Config, Name, PubKey) ->
 
     %% Check that TTL and pointers got updated in name entry
     {ok, 200, #{<<"name">>     := Name,
-      <<"name_ttl">> := NameTTL,
-      <<"pointers">> := Pointers}} = get_name(Name),
-
+                <<"name_ttl">> := NameTTL,
+                <<"pointers">> := Pointers}} = get_name(Name),
     ok.
 
 naming_system_manage_name(_Config) ->
