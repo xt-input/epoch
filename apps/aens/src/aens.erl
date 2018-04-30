@@ -27,11 +27,11 @@
 
 -spec resolve_decoded_to_account_pubkey(binary(), aens_state_tree:tree()) -> {ok, binary()} | {error, atom()}.
 resolve_decoded_to_account_pubkey(PubKeyOrName, NSTree) ->
-  case aens_utils:is_valid_name(PubKeyOrName) of
-    false ->
-      % this is pub key, not name
+  case aens_utils:validate_name(PubKeyOrName) of
+    {error, _Reason} ->
+      % this not a name, maybe pubkey or invalid
       {ok, PubKeyOrName};
-    true ->
+    ok ->
       % resolves name to account_pubkey, otherwise returns error
       case get_name(PubKeyOrName, NSTree) of
         {ok, #{<<"pointers">> := Pointers}} ->

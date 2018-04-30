@@ -14,7 +14,7 @@
          is_revoked/1,
          to_ascii/1,
          from_ascii/1,
-         is_valid_name/1]).
+         validate_name/1]).
 
 %%%===================================================================
 %%% Types
@@ -68,16 +68,18 @@ from_ascii(NameAscii) when is_binary(NameAscii) ->
     UnicodeName   = idna:from_ascii(NameAsciiList),
     list_to_binary(UnicodeName).
 
--spec is_valid_name(binary()) -> boolean().
-is_valid_name(Binary) ->
-    case length(binary:split(Binary, ?LABEL_SEPARATOR)) of
-        0 -> false;
-        _ -> case validate_name(Binary) of
-                 ok -> true;
-                 _  -> false
-             end
+validate_name(Name) ->
+    case binary:split(Name, ?LABEL_SEPARATOR, [global, trim]) of
+        [_Label, RegistrarNS] ->
+            case [RN || RN <- aec_governance:name_registrars(), RN =:= RegistrarNS] of
+                [] -> {error, registrar_unknown};
+                _  -> ok
+            end;
+        [_Name] ->
+            {error, no_registrar};
+        [_Label | _Namespaces] ->
+            {error, multiple_namespaces}
     end.
-
 
 %%%===================================================================
 %%% Internal functions
@@ -93,19 +95,6 @@ check_claimed_status(Name) ->
     case is_revoked(Name) of
         true  -> {error, name_revoked};
         false -> ok
-    end.
-
-validate_name(Name) ->
-    case binary:split(Name, ?LABEL_SEPARATOR, [global, trim]) of
-        [_Label, RegistrarNS] ->
-            case [RN || RN <- aec_governance:name_registrars(), RN =:= RegistrarNS] of
-                [] -> {error, registrar_unknown};
-                _  -> ok
-            end;
-        [_Name] ->
-            {error, no_registrar};
-        [_Label | _Namespaces] ->
-            {error, multiple_namespaces}
     end.
 
 validate_name_ascii(NameAscii) ->
