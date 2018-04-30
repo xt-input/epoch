@@ -395,6 +395,9 @@ groups() ->
      {channel_websocket, [sequence],
       [sc_ws_open,
        sc_ws_update,
+       sc_ws_close,
+       sc_ws_open,
+       sc_ws_update,
        sc_ws_close
       ]}
     ].
@@ -2998,12 +3001,15 @@ channel_sign_tx(ConnPid, Privkey, Tag) ->
 
 sc_ws_open(Config) ->
     #{initiator := #{pub_key := IPubkey,
-                    priv_key := IPrivkey,
-                    start_amt := IStartAmt},
+                    priv_key := IPrivkey},
       responder := #{pub_key := RPubkey,
-                    priv_key := RPrivkey,
-                    start_amt := RStartAmt}} = proplists:get_value(participants, Config),
+                    priv_key := RPrivkey}} = proplists:get_value(participants, Config),
 
+
+    {ok, 200, #{<<"balance">> := IStartAmt}} =
+                 get_balance_at_top(aec_base58c:encode(account_pubkey, IPubkey)),
+    {ok, 200, #{<<"balance">> := RStartAmt}} =
+                 get_balance_at_top(aec_base58c:encode(account_pubkey, RPubkey)),
     IAmt = 7,
     RAmt = 3,
 
