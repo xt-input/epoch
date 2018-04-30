@@ -400,6 +400,13 @@ jobs:
       - store_artifacts:
           path: system_test/logs
 
+  docker_system_tests_skeleton:
+    <<: *container_config
+    steps:
+      - checkout
+      - *setup_remote_docker
+      - *install_docker_client
+
   deploy_integration:
     <<: *container_config
     environment:
@@ -553,6 +560,14 @@ workflows:
               only: master
 
       - docker_system_tests:
+          filters:
+            branches:
+              ignore:
+                - env/dev1
+                - env/dev2
+
+      # Easy and fast SSH access to CI (temp)
+      - docker_system_tests_skeleton:
           filters:
             branches:
               ignore:
