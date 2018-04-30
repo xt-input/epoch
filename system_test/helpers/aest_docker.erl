@@ -24,7 +24,9 @@
 %=== MACROS ====================================================================
 
 -define(CONFIG_FILE_TEMPLATE, "epoch.yaml.mustache").
--define(EPOCH_CONFIG_FILE, "/home/epoch/epoch.yaml").
+%% Please note due to Docker limitations the following paths must be created in advance in the container,
+%% so that bind mounts in "remote docker" setups to work (e.g. CI). For more details see Dockerfile.
+-define(EPOCH_CONFIG_FILE, "/home/epoch/myepoch.yaml").
 -define(EPOCH_LOG_FOLDER, "/home/epoch/node/log").
 -define(EPOCH_KEYS_FOLDER, "/home/epoch/node/keys").
 -define(EPOCH_MINE_RATE, 1000).
