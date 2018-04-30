@@ -26,7 +26,8 @@
 -define(CONFIG_FILE_TEMPLATE, "epoch.yaml.mustache").
 %% Please note due to Docker limitations the following paths must be created in advance in the container,
 %% so that bind mounts in "remote docker" setups to work (e.g. CI). For more details see Dockerfile.
--define(EPOCH_CONFIG_FILE, "/home/epoch/myepoch.yaml").
+%% Also please note that bind mount of files does not work as expected on remote docker machines.
+-define(EPOCH_CONFIG_FOLDER, "/home/epoch/node/config").
 -define(EPOCH_LOG_FOLDER, "/home/epoch/node/log").
 -define(EPOCH_KEYS_FOLDER, "/home/epoch/node/keys").
 -define(EPOCH_MINE_RATE, 1000).
@@ -184,7 +185,8 @@ setup_node(Spec, BackendState) ->
     [Network  | OtherNetworks] = setup_networks(NetworkSpecs, NodeState),
 
     ConfigFileName = format("epoch_~s.yaml", [Name]),
-    ConfigFilePath = filename:join([TempDir, "config", ConfigFileName]),
+    ConfigDir = filename:join([TempDir, "config"]),
+    ConfigFilePath = filename:join([ConfigDir, ConfigFileName]),
     TemplateFile = filename:join(DataDir, ?CONFIG_FILE_TEMPLATE),
     PeerVars = lists:map(fun (Addr) -> #{peer => Addr} end, Peers),
     log(LogFun, "PeerVars: ~p", [PeerVars]),
@@ -234,6 +236,7 @@ setup_node(Spec, BackendState) ->
     LogPath = filename:join(TempDir, format("~s_logs", [Name])),
     ok = filelib:ensure_dir(filename:join(LogPath, "DUMMY")),
     KeysDir = keys_dir(DataDir, Name),
+    TargetConfigPath = filename:join([?EPOCH_CONFIG_FOLDER, ConfigFileName]),
     PortMapping = maps:fold(fun(Label, Port, Acc) ->
         [{tcp, maps:get(Label, LocalPorts), Port} | Acc]
     end, [], ExposedPorts),
@@ -243,10 +246,10 @@ setup_node(Spec, BackendState) ->
         image => Image,
         ulimits => [{nofile, 1024, 1024}],
         command => Command,
-        env => #{"EPOCH_CONFIG" => ?EPOCH_CONFIG_FILE},
+        env => #{"EPOCH_CONFIG" => TargetConfigPath},
         volumes => [
             {rw, KeysDir, ?EPOCH_KEYS_FOLDER},
-            {ro, ConfigFilePath, ?EPOCH_CONFIG_FILE},
+            {ro, ConfigDir, ?EPOCH_CONFIG_FOLDER},
             {rw, LogPath, ?EPOCH_LOG_FOLDER}
         ],
         ports => PortMapping
