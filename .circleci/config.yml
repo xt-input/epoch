@@ -9,6 +9,8 @@ references:
         user: builder
     working_directory: ~/epoch
     environment:
+      # CircleCI supported versions: https://circleci.com/docs/2.0/building-docker-images/#docker-version
+      # Official docker versions: https://download.docker.com/linux/static/stable/x86_64/
       DOCKER_CLIENT_VERSION: "17.09.0-ce"
       DOCKERHUB_REPO: aeternity/epoch
 
