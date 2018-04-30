@@ -8,29 +8,29 @@
 
 %% QuickCheck API exports
 -export([eqc_setup/2]).
--export([eqc_cleanup/1]).
+-export([eqc_cleanup/0]).
 
 %% Generic API exports
--export([setup_nodes/2]).
--export([start_node/2]).
--export([stop_node/3]).
--export([kill_node/2]).
--export([extract_archive/4]).
+-export([setup_nodes/1]).
+-export([start_node/1]).
+-export([stop_node/2]).
+-export([kill_node/1]).
+-export([extract_archive/3]).
+-export([run_cmd_in_node_dir/2]).
 -export([run_cmd_in_node_dir/3]).
--export([run_cmd_in_node_dir/4]).
--export([connect_node/3]).
--export([disconnect_node/3]).
--export([get_service_address/3]).
--export([get_node_pubkey/2]).
--export([http_get/5]).
--export([http_post/7]).
+-export([connect_node/2]).
+-export([disconnect_node/2]).
+-export([get_service_address/2]).
+-export([get_node_pubkey/1]).
+-export([http_get/4]).
+-export([http_post/6]).
 
 %% Helper function exports
--export([request/4]).
--export([get/5]).
--export([get_block/3]).
--export([get_top/2]).
--export([wait_for_value/4]).
+-export([request/3]).
+-export([get/4]).
+-export([get_block/2]).
+-export([get_top/1]).
+-export([wait_for_value/3]).
 
 %=== MACROS ====================================================================
 
@@ -43,7 +43,6 @@
 
 %=== TYPES ====================================================================
 
--type test_ctx() :: pid() | proplists:proplist().
 -type node_service() :: ext_http | int_http | int_ws.
 -type http_path() :: [atom() | binary() | number()] | binary().
 -type http_query() :: #{atom() | binary() => atom() | binary()}.
@@ -51,7 +50,6 @@
 -type http_body() :: binary().
 -type json_object() :: term().
 -type milliseconds() :: non_neg_integer().
--type seconds() :: non_neg_integer().
 -type path() :: binary() | string().
 -type peer_spec() :: atom() | binary().
 
@@ -76,9 +74,6 @@
 %=== COMMON TEST API FUNCTIONS =================================================
 
 %% @doc Setups the the node manager for Common Test.
-%% The CT config passed as argument is returned with extra values used
-%% to contact with the node manager. This config must be passed to all
-%% the the other functions as the `Ctx` parameter.
 -spec ct_setup(proplists:proplist()) -> proplists:proplist().
 ct_setup(Config) ->
     {data_dir, DataDir} = proplists:lookup(data_dir, Config),
@@ -97,21 +92,24 @@ ct_setup(Config) ->
     end.
 
 %% @doc Stops the node manager and all the nodes that were started.
-%% If the nodes log contains errors it will print the error lines and return
-%% `{error, log_errors}.
--spec ct_cleanup(test_ctx()) -> ok | {error, term()}.
-ct_cleanup(Ctx) ->
-    Pid = ctx2pid(Ctx),
-    call(Pid, dump_logs),
-    Result = call(Pid, cleanup),
-    call(Pid, stop),
-    wait_for_exit(Pid, 120000),
-    Result.
+%% If the nodes log contains errors it will print the error lines and
+%% ann error will be thrown.
+-spec ct_cleanup(proplists:proplist()) -> ok.
+ct_cleanup(_Config) ->
+    check_call(aest_nodes_mgr:dump_logs()),
+    Result = scan_logs_for_errors(),
+    check_call(aest_nodes_mgr:cleanup()),
+    check_call(aest_nodes_mgr:stop()),
+    wait_for_exit(120000),
+    case Result of
+        {error, Reason} -> erlang:error(Reason);
+        ok -> ok
+    end.
 
 %=== QICKCHECK API FUNCTIONS ===================================================
 
 %% @doc Setups the node manager for Quick Check tests.
--spec eqc_setup(path(), path()) -> test_ctx().
+-spec eqc_setup(path(), path()) -> pid().
 eqc_setup(DataDir, TempDir) ->
     case aest_nodes_mgr:start([aest_docker], #{data_dir => DataDir, temp_dir => TempDir}) of
         {ok, Pid} -> Pid;
@@ -120,93 +118,96 @@ eqc_setup(DataDir, TempDir) ->
     end.
 
 %% @doc Stops the node manager for QuickCheck tests.
--spec eqc_cleanup(test_ctx()) -> ok | {error, term()}.
-%% If the nodes log contains errors it will print the error lines and return
-%% `{error, log_errors}.
-eqc_cleanup(Ctx) ->
-    Pid = ctx2pid(Ctx),
-    Result = call(Pid, cleanup),
-    call(Pid, stop),
-    wait_for_exit(Pid, 120000),
-    Result.
+%% If the nodes log contains errors it will print the error lines and
+%% ann error will be thrown.
+-spec eqc_cleanup() -> ok.
+eqc_cleanup() ->
+    Result = scan_logs_for_errors(),
+    check_call(aest_nodes_mgr:cleanup()),
+    check_call(aest_nodes_mgr:stop()),
+    wait_for_exit(120000),
+    case Result of
+        {error, Reason} -> erlang:error(Reason);
+        ok -> ok
+    end.
 
 %=== GENERIC API FUNCTIONS =====================================================
 
 %% @doc Creates and setups a list of nodes.
 %% The nodes are not started, use `start_node/2` for that.
--spec setup_nodes([node_spec()], test_ctx()) -> ok.
-setup_nodes(NodeSpecs, Ctx) ->
-    call(ctx2pid(Ctx), {setup_nodes, NodeSpecs}).
+-spec setup_nodes([node_spec()]) -> ok.
+setup_nodes(NodeSpecs) ->
+    check_call(aest_nodes_mgr:setup_nodes(NodeSpecs)).
 
 %% @doc Starts a node previously setup.
--spec start_node(atom(), test_ctx()) -> ok.
-start_node(NodeName, Ctx) ->
-    call(ctx2pid(Ctx), {start_node, NodeName}).
+-spec start_node(atom()) -> ok.
+start_node(NodeName) ->
+    check_call(aest_nodes_mgr:start_node(NodeName)).
 
-%% @doc Stops a node previously started with explicit timeout (in seconds)
+%% @doc Stops a node previously started with explicit timeout (in milliseconds)
 %% after which the node will be killed.
--spec stop_node(atom(), seconds() | infinity, test_ctx()) -> ok.
-stop_node(NodeName, Timeout, Ctx) ->
-    call(ctx2pid(Ctx), {stop_node, NodeName, Timeout}).
+-spec stop_node(atom(), milliseconds() | infinity) -> ok.
+stop_node(NodeName, Timeout) ->
+    check_call(aest_nodes_mgr:stop_node(NodeName, Timeout)).
 
 %% @doc Kills a node.
--spec kill_node(atom(), test_ctx()) -> ok.
-kill_node(NodeName, Ctx) ->
-    call(ctx2pid(Ctx), {kill_node, NodeName}).
+-spec kill_node(atom()) -> ok.
+kill_node(NodeName) ->
+    check_call(aest_nodes_mgr:kill_node(NodeName)).
 
-extract_archive(NodeName, Path, Archive, Ctx) ->
-    call(ctx2pid(Ctx), {extract_archive, NodeName, Path, Archive}).
+extract_archive(NodeName, Path, Archive) ->
+    check_call(aest_nodes_mgr:extract_archive(NodeName, Path, Archive)).
 
-run_cmd_in_node_dir(NodeName, Cmd, Ctx) ->
-    call(ctx2pid(Ctx), {run_cmd_in_node_dir, NodeName, Cmd, 5000}).
+run_cmd_in_node_dir(NodeName, Cmd) ->
+    check_call(aest_nodes_mgr:run_cmd_in_node_dir(NodeName, Cmd, 5000)).
 
-run_cmd_in_node_dir(NodeName, Cmd, Timeout, Ctx) ->
-    call(ctx2pid(Ctx), {run_cmd_in_node_dir, NodeName, Cmd, Timeout}).
+run_cmd_in_node_dir(NodeName, Cmd, Timeout) ->
+    check_call(aest_nodes_mgr:run_cmd_in_node_dir(NodeName, Cmd, Timeout)).
 
 %% @doc Connect a node to a network.
--spec connect_node(atom(), atom(), test_ctx()) -> ok.
-connect_node(NodeName, NetName, Ctx) ->
-    call(ctx2pid(Ctx), {connect_node, NodeName, NetName}).
+-spec connect_node(atom(), atom()) -> ok.
+connect_node(NodeName, NetName) ->
+    check_call(aest_nodes_mgr:connect_node(NodeName, NetName)).
 
 %% @doc Disconnect a node from a network.
--spec disconnect_node(atom(), atom(), test_ctx()) -> ok.
-disconnect_node(NodeName, NetName, Ctx) ->
-    call(ctx2pid(Ctx), {disconnect_node, NodeName, NetName}).
+-spec disconnect_node(atom(), atom()) -> ok.
+disconnect_node(NodeName, NetName) ->
+    check_call(aest_nodes_mgr:disconnect_node(NodeName, NetName)).
 
 %% @doc Retrieves the address of a given node's service.
--spec get_service_address(atom(), node_service(), test_ctx()) -> binary().
-get_service_address(NodeName, Service, Ctx) ->
-    call(ctx2pid(Ctx), {get_service_address, NodeName, Service}).
+-spec get_service_address(atom(), node_service()) -> binary().
+get_service_address(NodeName, Service) ->
+    check_call(aest_nodes_mgr:get_service_address(NodeName, Service)).
 
--spec get_node_pubkey(atom(), test_ctx()) -> binary().
-get_node_pubkey(NodeName, Ctx) ->
-    call(ctx2pid(Ctx), {get_node_pubkey, NodeName}).
+-spec get_node_pubkey(atom()) -> binary().
+get_node_pubkey(NodeName) ->
+    check_call(aest_nodes_mgr:get_node_pubkey(NodeName)).
 
 %% @doc Performs and HTTP get on a node service (ext_http or int_http).
--spec http_get(atom(), ext_http | int_http, http_path(), http_query(), test_ctx()) ->
+-spec http_get(atom(), ext_http | int_http, http_path(), http_query()) ->
         {ok, pos_integer(), json_object()} | {error, term()}.
-http_get(NodeName, Service, Path, Query, Ctx) ->
-    Addr = get_service_address(NodeName, Service, Ctx),
+http_get(NodeName, Service, Path, Query) ->
+    Addr = get_service_address(NodeName, Service),
     http_addr_get(Addr, Path, Query).
 
--spec http_post(atom(), ext_http | int_http, http_path(), http_query(), http_headers(), http_body(), test_ctx()) ->
+-spec http_post(atom(), ext_http | int_http, http_path(), http_query(), http_headers(), http_body()) ->
         {ok, pos_integer(), json_object()} | {error, term()}.
-http_post(NodeName, Service, Path, Query, Headers, Body, Ctx) ->
-    Addr = get_service_address(NodeName, Service, Ctx),
+http_post(NodeName, Service, Path, Query, Headers, Body) ->
+    Addr = get_service_address(NodeName, Service),
     http_addr_post(Addr, Path, Query, Headers, Body).
 
 %=== HELPER FUNCTIONS ==========================================================
 
 %% @doc Performs an HTTP get request on the node external API.
 %% Should preferably use `get/5` with service `ext_http`.
--spec request(atom(), http_path(), http_query(), test_ctx) -> json_object().
-request(NodeName, Path, Query, Ctx) ->
-    get(NodeName, ext_http, Path, Query, Ctx).
+-spec request(atom(), http_path(), http_query()) -> json_object().
+request(NodeName, Path, Query) ->
+    get(NodeName, ext_http, Path, Query).
 
 %% @doc Performs an HTTP get request on a node HTTP service.
--spec get(atom(), int_http | ext_http, http_path(), http_query(), test_ctx()) -> json_object().
-get(NodeName, Service, Path, Query, Ctx) ->
-    case http_get(NodeName, Service, Path, Query, Ctx) of
+-spec get(atom(), int_http | ext_http, http_path(), http_query()) -> json_object().
+get(NodeName, Service, Path, Query) ->
+    case http_get(NodeName, Service, Path, Query) of
         {ok, 200, Response} -> Response;
         {ok, Status, _Response} -> error({unexpected_status, Status});
         {error, Reason} -> error({http_error, Reason})
@@ -214,28 +215,27 @@ get(NodeName, Service, Path, Query, Ctx) ->
 
 %% @doc Retrieves a block at given height from the given node.
 %% It will throw an excpetion if the block does not exists.
--spec get_block(atom(), non_neg_integer(), test_ctx()) -> json_object().
-get_block(NodeName, Height, Ctx) ->
-    case http_get(NodeName, ext_http, [v2, 'block-by-height'],
-                  #{height => Height}, Ctx) of
+-spec get_block(atom(), non_neg_integer()) -> json_object().
+get_block(NodeName, Height) ->
+    case http_get(NodeName, ext_http, [v2, 'block-by-height'], #{height => Height}) of
         {ok, 200, Response} -> Response;
         {ok, Status, _Response} -> error({unexpected_status, Status});
         {error, Reason} -> error({http_error, Reason})
     end.
 
 %% @doc Retrieves the top block from the given node.
--spec get_top(atom(), test_ctx()) -> json_object().
-get_top(NodeName, Ctx) ->
-    case http_get(NodeName, ext_http, [v2, 'top'], #{}, Ctx) of
+-spec get_top(atom()) -> json_object().
+get_top(NodeName) ->
+    case http_get(NodeName, ext_http, [v2, 'top'], #{}) of
         {ok, 200, Response} -> Response;
         {ok, Status, _Response} -> error({unexpected_status, Status});
         {error, Reason} -> error({http_error, Reason})
     end.
 
--spec wait_for_value({balance, binary(), non_neg_integer()}, [atom()], milliseconds(), test_ctx()) -> ok;
-                    ({height, non_neg_integer()}, [atom()], milliseconds(), test_ctx()) -> ok.
-wait_for_value({balance, PubKey, MinBalance}, NodeNames, Timeout, Ctx) ->
-    Addrs = [get_service_address(N, ext_http, Ctx) || N <- NodeNames],
+-spec wait_for_value({balance, binary(), non_neg_integer()}, [atom()], milliseconds()) -> ok;
+                    ({height, non_neg_integer()}, [atom()], milliseconds()) -> ok.
+wait_for_value({balance, PubKey, MinBalance}, NodeNames, Timeout) ->
+    Addrs = [get_service_address(N, ext_http) || N <- NodeNames],
     Expiration = make_expiration(Timeout),
     CheckF =
         fun(Addr) ->
@@ -245,9 +245,9 @@ wait_for_value({balance, PubKey, MinBalance}, NodeNames, Timeout, Ctx) ->
                 end
         end,
     wait_for_value(CheckF, Addrs, [], 500, Expiration);
-wait_for_value({height, MinHeight}, NodeNames, Timeout, Ctx) ->
+wait_for_value({height, MinHeight}, NodeNames, Timeout) ->
     Start = erlang:system_time(millisecond),
-    Addrs = [get_service_address(N, ext_http, Ctx) || N <- NodeNames],
+    Addrs = [get_service_address(N, ext_http) || N <- NodeNames],
     Expiration = make_expiration(Timeout),
     CheckF =
         fun(Addr) ->
@@ -258,41 +258,27 @@ wait_for_value({height, MinHeight}, NodeNames, Timeout, Ctx) ->
         end,
     wait_for_value(CheckF, Addrs, [], 500, Expiration),
     Duration = (erlang:system_time(millisecond) - Start) / 1000,
-    ct:log("Height ~p reached on nodes ~p after ~.2f seconds",
-        [MinHeight, NodeNames, Duration]
+    aest_nodes_mgr:log("Height ~p reached on nodes ~p after ~.2f seconds",
+                       [MinHeight, NodeNames, Duration]
     ).
 
 
 
 %=== INTERNAL FUNCTIONS ========================================================
 
-log(#{log_fun := undefined}, _Fmt, _Args) -> ok;
-log(#{log_fun := LogFun}, Fmt, Args) -> LogFun(Fmt, Args).
-
 uid() ->
     iolist_to_binary([[io_lib:format("~2.16.0B",[X])
                        || <<X:8>> <= crypto:strong_rand_bytes(8) ]]).
 
-ctx2pid(Pid) when is_pid(Pid) -> Pid;
-ctx2pid(Props) when is_list(Props) ->
-    case proplists:lookup(?CT_CONF_KEY, Props) of
-        {?CT_CONF_KEY, Pid} when is_pid(Pid) -> Pid;
-        _ ->
-            erlang:error({system_test_not_setup, []})
-    end.
+check_call({'$error', Reason, Stacktrace}) ->
+    erlang:raise(throw, Reason, Stacktrace);
+check_call(Reply) ->
+    Reply.
 
-call(Pid, Msg) ->
-    case gen_server:call(Pid, Msg, ?CALL_TIMEOUT) of
-        {'$error', Reason, Stacktrace} ->
-            erlang:raise(throw, Reason, Stacktrace);
-        Reply ->
-            Reply
-    end.
-
-wait_for_exit(Pid, Timeout) ->
-    Ref = erlang:monitor(process, Pid),
-    receive {'DOWN', Ref, process, Pid, _Reason} -> ok
-    after Timeout -> error({process_not_stopped, Pid})
+wait_for_exit(Timeout) ->
+    case aest_nodes_mgr:wait_for_exit(Timeout) of
+        {error, Reason} -> error(Reason);
+        ok -> ok
     end.
 
 make_expiration(Timeout) ->
@@ -359,3 +345,21 @@ decode_json(Data) ->
     catch
         error:badarg -> {error, {bad_json, Data}}
     end.
+
+scan_logs_for_errors() ->
+    Logs = aest_nodes_mgr:get_log_paths(),
+    maps:fold(fun(NodeName, LogPath, Result) ->
+        LogFile = binary_to_list(filename:join(LogPath, "epoch.log")),
+        case filelib:is_file(LogFile) of
+            false -> Result;
+            true ->
+                Command = "grep '\\[error\\]' '" ++ LogFile ++ "'",
+                case os:cmd(Command) of
+                    "" -> Result;
+                    ErrorLines ->
+                        aest_nodes_mgr:log("Node ~p's logs contains errors:~n~s",
+                                           [NodeName, ErrorLines]),
+                        {error, log_errors}
+                end
+        end
+    end, ok, Logs).

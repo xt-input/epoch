@@ -13,8 +13,21 @@
 
 %% API
 -export([start/2, stop/0]).
--export([cleanup/0, dump_logs/0, setup_nodes/1, start_node/1, stop_node/2, 
-         get_service_address/2]).
+-export([cleanup/0
+        , dump_logs/0
+        , setup_nodes/1
+        , start_node/1
+        , stop_node/2
+        , kill_node/1
+        , run_cmd_in_node_dir/3
+        , connect_node/2
+        , disconnect_node/2
+        , get_node_pubkey/1
+        , get_service_address/2
+        , get_log_paths/0
+        , extract_archive/3
+        , wait_for_exit/1
+        , log/2]).
 
 %% gen_server callbacks
 -export([ init/1
@@ -52,6 +65,9 @@ cleanup() ->
 dump_logs() ->
     gen_server:call(?SERVER, dump_logs).
 
+get_log_paths() ->
+    gen_server:call(?SERVER, get_log_paths).
+
 setup_nodes(NodeSpecs) ->
     gen_server:call(?SERVER, {setup_nodes, NodeSpecs}).
 
@@ -61,8 +77,35 @@ start_node(NodeName) ->
 stop_node(NodeName, Timeout) ->
     gen_server:call(?SERVER, {stop_node, NodeName, Timeout}).
 
+kill_node(NodeName) ->
+    gen_server:call(?SERVER, {kill_node, NodeName}).
+
+run_cmd_in_node_dir(NodeName, Cmd, Timeout) ->
+    gen_server:call(?SERVER, {run_cmd_in_node_dir, NodeName, Cmd, Timeout}).
+
+connect_node(NodeName, NetName) ->
+    gen_server:call(?SERVER, {connect_node, NodeName, NetName}).
+
+disconnect_node(NodeName, NetName) ->
+    gen_server:call(?SERVER, {disconnect_node, NodeName, NetName}).
+
+get_node_pubkey(NodeName) ->
+    gen_server:call(?SERVER, {get_node_pubkey, NodeName}).
+
 get_service_address(NodeName, Service) ->
     gen_server:call(?SERVER, {get_service_address, NodeName, Service}).
+
+extract_archive(NodeName, Path, Archive) ->
+    gen_server:call(?SERVER, {extract_archive, NodeName, Path, Archive}).
+
+wait_for_exit(Timeout) ->
+    Ref = erlang:monitor(process, ?SERVER),
+    receive {'DOWN', Ref, process, _, _Reason} -> ok
+    after Timeout -> {error, process_not_stopped}
+    end.
+
+log(Format, Params) ->
+    gen_server:call(?SERVER, {log, Format, Params}).
 
 %=== BEHAVIOUR GEN_SERVER CALLBACK FUNCTIONS ===================================
 
@@ -74,12 +117,11 @@ init([Backends, EnvMap]) ->
     {ok, InitialState#{backends => [{Backend, Backend:start(Opts)} || Backend <- Backends ],
                        nodes => #{} }}.
 
+handle_call(get_log_paths, _From, State) ->
+    {reply, mgr_get_log_paths(State), State};
 handle_call(cleanup, _From, State) ->
-    Result = mgr_scan_logs_for_errors(State),
     CleanState = mgr_cleanup(State),
-    {reply, Result, CleanState};
-handle_call(stop, _From, State) ->
-    {stop, normal, ok, State};
+    {reply, ok, CleanState};
 handle_call(dump_logs, _From, #{nodes := Nodes} = State) ->
     [ Backend:node_logs(Node) || {Backend, Node} <- maps:values(Nodes) ],
     {reply, ok, State};
@@ -107,6 +149,8 @@ handle_call({connect_node, NodeName, NetName}, _From, State) ->
     {reply, ok, mgr_connect_node(NodeName, NetName, State)};
 handle_call({disconnect_node, NodeName, NetName}, _From, State) ->
     {reply, ok, mgr_disconnect_node(NodeName, NetName, State)};
+handle_call({log, Format, Params}, _From, State) ->
+    {reply, ok, mgr_log(Format, Params, State)};
 handle_call(Request, From, _State) ->
     erlang:error({unknown_request, Request, From}).
 
@@ -131,6 +175,11 @@ log(#{log_fun := LogFun}, Format, Params) when is_function(LogFun) ->
     LogFun(Format, Params);
 log(_, _, _) -> ok.
 
+mgr_get_log_paths(#{nodes := Nodes}) ->
+    maps:fold(fun(NodeName, {Mod, NodeState}, Acc) ->
+        Acc#{NodeName => Mod:get_log_path(NodeState)}
+    end, #{}, Nodes).
+
 mgr_cleanup(State) ->
     %% Node cleanup can be disabled for debugging,
     %% then we keep dockers running
@@ -138,34 +187,13 @@ mgr_cleanup(State) ->
         Value when Value =:= "true"; Value =:= "1" ->
             State;
         _ ->
-            [ begin 
+            [ begin
                   Backend:stop_node(Node, #{soft_timeout => 0}),
                   Backend:delete_node(Node)
               end || {Backend, Node} <- maps:values(maps:get(nodes, State)) ],
             [ Backend:stop(BackendState) || {Backend, BackendState} <- maps:get(backends, State) ],
             State#{backends => [], nodes => #{}}
     end.
-
-mgr_scan_logs_for_errors(#{nodes := Nodes} = State) ->
-    maps:fold(fun(NodeName, {Backend, NodeState}, Result) ->
-        LogPath = Backend:get_log_path(NodeState),
-        LogFile = binary_to_list(filename:join(LogPath, "epoch.log")),
-        case filelib:is_file(LogFile) of
-            false -> Result;
-            true ->
-                Command = "grep '\\[error\\]' '" ++ LogFile ++ "'"
-                       %% Ingore errors from watchdog/eper due to dead process
-                       ++ "| grep -v 'emulator Error in process <[0-9.]*> "
-                       ++ "on node epoch@localhost with exit value'",
-                case os:cmd(Command) of
-                    "" -> Result;
-                    ErrorLines ->
-                        log(State, "Node ~p's logs contains errors:~n~s",
-                            [NodeName, ErrorLines]),
-                    {error, log_errors}
-                end
-        end
-    end, ok, Nodes).
 
 mgr_get_service_address(NodeName, Service, #{nodes := Nodes}) ->
     #{NodeName := {Mod, NodeState}} = Nodes,
@@ -241,3 +269,7 @@ mgr_setup_node(#{backend := Mod, name := Name} = NodeSpec, Backends) ->
             NodeState = Mod:setup_node(NodeSpec, BackendState),
             {Name, {Mod, NodeState}}
     end.
+
+mgr_log(Format, Params, #{log_fun := LogFun} = State) ->
+    log(LogFun, Format, Params),
+    State.
