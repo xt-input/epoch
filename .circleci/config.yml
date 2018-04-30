@@ -9,13 +9,13 @@ references:
         user: builder
     working_directory: ~/epoch
     environment:
-      DOCKER_CLIENT_VERSION: "17.12.1-ce"
+      DOCKER_CLIENT_VERSION: "17.09.0-ce"
       DOCKERHUB_REPO: aeternity/epoch
 
   setup_remote_docker: &setup_remote_docker
     setup_remote_docker:
       docker_layer_caching: true
-      version: "17.12.1-ce"
+      version: "17.09.0-ce"
 
   install_docker_client: &install_docker_client
     run:
